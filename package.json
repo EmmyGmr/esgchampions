@@ -4,7 +4,7 @@
   "description": "STIF - Democratising Sustainability for Every Business",
   "scripts": {
     "dev": "npx serve .",
-    "build": "echo 'No build step required for static site'",
+    "build": "node build.js",
     "deploy": "vercel --prod"
   },
   "keywords": [

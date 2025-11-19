@@ -33,6 +33,7 @@ yarn.lock
 # Build outputs
 dist/
 build/
+public/
 .vercel/
 .netlify/
 
