@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESG Champions Rankings - STIF</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <a href="index.html" class="logo">stif.</a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About STIF</a>
+        <span>Our Solutions</span>
+        <a href="#" id="membership-btn" class="btn-primary">Membership</a>
+        <div style="display: flex; gap: 0.5rem;">
+         
+          <a href="ranking.html" class="btn-primary">Rankings</a>
+        </div>
+        <a href="#" id="logout-btn" class="btn-secondary">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main style="min-height: calc(100vh - 200px); padding: 4rem 0;">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> / <a href="champion-dashboard.html">Dashboard</a> / <span>Rankings</span>
+      </div>
+
+      <!-- Hero Section -->
+      <section class="section" style="padding-top: 2rem;">
+        <div class="text-center mb-12">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+          <h1 class="mb-4">ESG Champions Rankings</h1>
+          <p class="text-gray" style="font-size: 1.125rem; max-width: 48rem; margin: 0 auto;">
+            Discover and explore top-performing companies leading in Environmental, Social, and Governance practices
+          </p>
+        </div>
+
+        <!-- Top 3 Podium -->
+        <div class="grid grid-cols-3 gap-8 mb-16" style="max-width: 900px; margin: 0 auto 4rem;">
+          <div class="card text-center" style="order: 2; transform: scale(1.1);">
+            <div style="font-size: 2.5rem; margin-bottom: 1rem;">🥇</div>
+            <h3 style="margin-bottom: 0.5rem;">GreenTech Industries</h3>
+            <p class="text-gray mb-4" style="font-size: 0.875rem;">Technology</p>
+            <div style="font-size: 3rem; font-weight: 700; color: #0D4D6C; margin-bottom: 0.5rem;">95</div>
+            <span class="text-gray" style="font-size: 0.875rem;">Overall Score</span>
+          </div>
+          <div class="card text-center" style="order: 1;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🥈</div>
+            <h3 style="margin-bottom: 0.5rem;">Equitable Corp</h3>
+            <p class="text-gray mb-4" style="font-size: 0.875rem;">Banking & Finance</p>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #0D4D6C; margin-bottom: 0.5rem;">93</div>
+            <span class="text-gray" style="font-size: 0.875rem;">Overall Score</span>
+          </div>
+          <div class="card text-center" style="order: 3;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">🥉</div>
+            <h3 style="margin-bottom: 0.5rem;">Integrity Holdings</h3>
+            <p class="text-gray mb-4" style="font-size: 0.875rem;">Manufacturing</p>
+            <div style="font-size: 2.5rem; font-weight: 700; color: #0D4D6C; margin-bottom: 0.5rem;">92</div>
+            <span class="text-gray" style="font-size: 0.875rem;">Overall Score</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Section -->
+      <section class="section bg-gray">
+        <div class="container">
+          <div class="grid grid-cols-3 gap-8">
+            <div class="card text-center">
+              <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">150+</div>
+              <p class="text-gray mb-2" style="font-weight: 600;">Total Champions</p>
+              <p class="text-gray" style="font-size: 0.875rem;">Organizations recognized globally</p>
+            </div>
+            <div class="card text-center">
+              <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">+28%</div>
+              <p class="text-gray mb-2" style="font-weight: 600;">ESG Improvement</p>
+              <p class="text-gray" style="font-size: 0.875rem;">Average score increase in 2024</p>
+            </div>
+            <div class="card text-center">
+              <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">24</div>
+              <p class="text-gray mb-2" style="font-weight: 600;">Industries Covered</p>
+              <p class="text-gray" style="font-size: 0.875rem;">Across all major sectors</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Filters and Search -->
+      <section class="section">
+        <div class="container">
+          <div class="card mb-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2>Explore All Champions</h2>
+              <span class="badge" style="background-color: #0D4D6C; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem;">15 Companies</span>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="form-group">
+                <label>Search</label>
+                <input type="text" placeholder="Search companies, sectors, or countries..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem;">
+              </div>
+              <div class="form-group">
+                <label>Sector</label>
+                <select style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem;">
+                  <option>All Sectors</option>
+                  <option>Technology</option>
+                  <option>Energy</option>
+                  <option>Manufacturing</option>
+                  <option>Banking & Finance</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Sort By</label>
+                <select style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem;">
+                  <option>Overall Rank</option>
+                  <option>Environmental Score</option>
+                  <option>Social Score</option>
+                  <option>Governance Score</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Champions Section -->
+      <section class="section">
+        <div class="container">
+          <div class="text-center mb-12">
+            <h2 class="mb-4">Featured Champions</h2>
+            <p class="text-gray" style="font-size: 1.125rem;">Browse organizations making a real impact across all ESG pillars</p>
+          </div>
+
+          <!-- Tabs -->
+          <div class="mb-8">
+            <div class="flex justify-center gap-4 mb-8">
+              <button class="tab-btn btn-secondary active" data-tab="all" style="padding: 0.75rem 1.5rem;">All Champions</button>
+              <button class="tab-btn btn-secondary" data-tab="environmental" style="padding: 0.75rem 1.5rem;">🌿 Environmental</button>
+              <button class="tab-btn btn-secondary" data-tab="social" style="padding: 0.75rem 1.5rem;">👥 Social</button>
+              <button class="tab-btn btn-secondary" data-tab="governance" style="padding: 0.75rem 1.5rem;">⚖️ Governance</button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content active" id="tab-all">
+              <div class="grid grid-cols-3 gap-8" id="champions-grid-all">
+                <!-- Champions will be dynamically loaded here -->
+              </div>
+            </div>
+            <div class="tab-content" id="tab-environmental" style="display: none;">
+              <div class="grid grid-cols-3 gap-8" id="champions-grid-environmental">
+                <!-- Environmental champions -->
+              </div>
+            </div>
+            <div class="tab-content" id="tab-social" style="display: none;">
+              <div class="grid grid-cols-3 gap-8" id="champions-grid-social">
+                <!-- Social champions -->
+              </div>
+            </div>
+            <div class="tab-content" id="tab-governance" style="display: none;">
+              <div class="grid grid-cols-3 gap-8" id="champions-grid-governance">
+                <!-- Governance champions -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA Section -->
+      <section class="section bg-gray">
+        <div class="container text-center">
+          <h3 class="mb-4">Know an ESG Champion?</h3>
+          <p class="text-gray mb-8" style="font-size: 1.125rem; max-width: 48rem; margin: 0 auto;">
+            Help us recognize organizations that are making a positive impact on people and the planet
+          </p>
+          <button class="btn-primary" style="padding: 0.75rem 2rem;">Nominate an Organization</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="logo mb-6">stif.</div>
+          <div class="social-links">
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </a>
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Company</h3>
+          <ul>
+            <li><a href="about.html">About STIF</a></li>
+            <li><a href="index.html">Our Solutions</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Support</h3>
+          <ul>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="terms.html">Terms of service</a></li>
+            <li><a href="privacy.html">Privacy policy</a></li>
+            <li><a href="cookie-policy.html">Cookie policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Schedule an appointment</h3>
+          <button class="btn-primary" style="width: 100%;">📅 Schedule</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Membership Modal -->
+  <div id="membership-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-6">
+        <h2>Choose your account type</h2>
+        <button id="close-membership-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="flex flex-col gap-4">
+        <button id="business-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          Business
+        </button>
+        <button id="champion-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          ESG Champion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase Integration for Rankings -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-service.js"></script>
+  <script src="admin-service.js"></script>
+  <script src="ranking-supabase.js"></script>
+  <script src="membership-modal.js"></script>
+  <script src="logout.js"></script>
+  <script src="navigation-auth.js"></script>
+</body>
+</html>
+

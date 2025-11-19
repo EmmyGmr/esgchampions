@@ -1,0 +1,168 @@
+// Champion Authentication System with Supabase
+// This replaces champion-auth.js functionality with Supabase
+
+// Password toggle functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const passwordToggles = document.querySelectorAll('.password-toggle');
+  passwordToggles.forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      const input = toggle.previousElementSibling;
+      if (input && input.type === 'password') {
+        input.type = 'text';
+        toggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+      } else if (input) {
+        input.type = 'password';
+        toggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+      }
+    });
+  });
+
+  // Login form
+  const loginForm = document.getElementById('champion-login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Signing in...';
+
+        // Sign in with Supabase
+        const { data, error } = await SupabaseService.signIn(email, password);
+
+        if (error) {
+          throw error;
+        }
+
+        // Get champion profile
+        const champion = await SupabaseService.getCurrentChampion();
+        
+        if (!champion) {
+          throw new Error('Champion profile not found');
+        }
+
+        // Store session info in localStorage for quick access (optional)
+        localStorage.setItem('current-champion-id', champion.id);
+
+        // Redirect to dashboard
+        window.location.href = 'champion-dashboard.html';
+      } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Invalid email or password');
+        
+        // Reset button
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  }
+
+  // Registration form (if on register page)
+  const registerForm = document.getElementById('champion-register-form');
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = {
+        firstName: document.getElementById('champion-firstName').value.trim(),
+        lastName: document.getElementById('champion-lastName').value.trim(),
+        organization: document.getElementById('champion-organization').value.trim(),
+        role: document.getElementById('champion-role').value.trim(),
+        email: document.getElementById('champion-email').value.trim(),
+        mobile: document.getElementById('champion-mobile').value.trim(),
+        officePhone: document.getElementById('champion-office-phone').value.trim(),
+        linkedin: document.getElementById('champion-linkedin').value.trim(),
+        website: document.getElementById('champion-website').value.trim(),
+        competence: document.getElementById('champion-competence').value,
+        contributions: document.getElementById('champion-contributions').value.trim(),
+        primarySector: document.getElementById('champion-primary-sector').value,
+        expertisePanels: document.getElementById('champion-expertise-panels').value,
+        password: document.getElementById('champion-password').value,
+        confirmPassword: document.getElementById('champion-confirmPassword').value,
+        claAccepted: document.getElementById('champion-cla').checked,
+        ndaAccepted: document.getElementById('champion-nda-check').checked,
+        ndaSignature: document.getElementById('champion-nda-signature').value.trim(),
+        termsAccepted: document.getElementById('champion-acceptedTerms').checked,
+        ipPolicyAccepted: document.getElementById('champion-ip-policy').checked
+      };
+
+      // Validation
+      if (!formData.firstName || !formData.lastName || !formData.organization || !formData.role || 
+          !formData.email || !formData.mobile || !formData.primarySector || !formData.expertisePanels || 
+          !formData.password || !formData.claAccepted || !formData.ndaAccepted || !formData.ndaSignature || !formData.termsAccepted) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      if (formData.password.length < 8) {
+        alert('Password must be at least 8 characters');
+        return;
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        alert('Passwords do not match');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Registering...';
+
+        // Sign up with Supabase
+        const { user, champion } = await SupabaseService.signUp(
+          formData.email,
+          formData.password,
+          {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            organization: formData.organization,
+            role: formData.role,
+            mobile: formData.mobile,
+            officePhone: formData.officePhone,
+            linkedin: formData.linkedin,
+            website: formData.website,
+            competence: formData.competence,
+            contributions: formData.contributions,
+            primarySector: formData.primarySector,
+            expertisePanels: formData.expertisePanels,
+            claAccepted: formData.claAccepted,
+            ndaAccepted: formData.ndaAccepted,
+            ndaSignature: formData.ndaSignature,
+            termsAccepted: formData.termsAccepted,
+            ipPolicyAccepted: formData.ipPolicyAccepted
+          }
+        );
+
+        // Store session info
+        localStorage.setItem('current-champion-id', champion.id);
+
+        alert('Registration successful! Redirecting to dashboard...');
+        window.location.href = 'champion-dashboard.html';
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert(error.message || 'Registration failed. Please try again.');
+        
+        // Reset button
+        const submitBtn = registerForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  }
+});
+

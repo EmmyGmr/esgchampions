@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESG Champions - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <a href="index.html" class="logo">stif.</a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About STIF</a>
+        <span>Our Solutions</span>
+        <a href="#" id="membership-btn" class="btn-primary">Membership</a>
+        <a href="ranking.html" class="btn-primary">Rankings</a>
+        <a href="#" id="logout-btn" class="btn-secondary">Logout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main style="min-height: calc(100vh - 200px); padding: 4rem 0;">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> / <span>ESG Champions Dashboard</span>
+      </div>
+
+      <!-- Welcome Section -->
+      <div class="mb-12">
+        <h1 class="mb-4">Welcome back, <span id="champion-name">Champion</span>!</h1>
+        <p class="text-gray" style="font-size: 1.125rem;">Review your account information and panel participation history</p>
+      </div>
+
+      <!-- Account Information Card -->
+      <div class="card mb-8">
+        <h2 class="mb-6">Account Information</h2>
+        <div class="grid grid-cols-2 gap-8">
+          <div>
+            <p class="text-gray mb-2">Full Name</p>
+            <p class="text-gray-dark" id="account-fullname" style="font-weight: 500;">-</p>
+          </div>
+          <div>
+            <p class="text-gray mb-2">Email</p>
+            <p class="text-gray-dark" id="account-email" style="font-weight: 500;">-</p>
+          </div>
+          <div>
+            <p class="text-gray mb-2">Organization</p>
+            <p class="text-gray-dark" id="account-organization" style="font-weight: 500;">-</p>
+          </div>
+          <div>
+            <p class="text-gray mb-2">Expertise Areas</p>
+            <p class="text-gray-dark" id="account-expertise" style="font-weight: 500;">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Participation History -->
+      <div class="card mb-8">
+        <div class="flex justify-between items-center mb-6">
+          <h2>Panel Participation History</h2>
+          <div class="flex gap-4">
+            <a href="ranking.html" class="btn-primary">View Rankings</a>
+            <a href="champion-panels.html" class="btn-primary">Browse All Panels</a>
+          </div>
+        </div>
+        <div id="participation-history">
+          <p class="text-gray">No panel participation yet. <a href="champion-panels.html" class="text-primary" style="text-decoration: underline;">Start reviewing panels</a></p>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-3 gap-8 mb-8">
+        <div class="card text-center">
+          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-panels">0</div>
+          <p class="text-gray">Panels Reviewed</p>
+        </div>
+        <div class="card text-center">
+          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-indicators">0</div>
+          <p class="text-gray">Indicators Voted</p>
+        </div>
+        <div class="card text-center">
+          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-comments">0</div>
+          <p class="text-gray">Comments Posted</p>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card">
+        <h2 class="mb-6">Recent Activity</h2>
+        <div id="recent-activity">
+          <p class="text-gray">No recent activity</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="logo mb-6">stif.</div>
+          <div class="social-links">
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </a>
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Company</h3>
+          <ul>
+            <li><a href="about.html">About STIF</a></li>
+            <li><a href="index.html">Our Solutions</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Support</h3>
+          <ul>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="terms.html">Terms of service</a></li>
+            <li><a href="privacy.html">Privacy policy</a></li>
+            <li><a href="cookie-policy.html">Cookie policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Schedule an appointment</h3>
+          <button class="btn-primary" style="width: 100%;">📅 Schedule</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Membership Modal -->
+  <div id="membership-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-6">
+        <h2>Choose your account type</h2>
+        <button id="close-membership-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="flex flex-col gap-4">
+        <button id="business-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          Business
+        </button>
+        <button id="champion-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          ESG Champion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="champion-db.js"></script>
+  <script src="champion-dashboard.js"></script>
+  <script src="membership-modal.js"></script>
+  <script src="logout.js"></script>
+  <script src="navigation-auth.js"></script>
+</body>
+</html>
+

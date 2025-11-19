@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Join STIF</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container header-content">
+      <a href="index.html" class="logo">stif.</a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="about.html">About STIF</a>
+        <span>Our Solutions</span>
+        <a href="#" id="membership-btn" class="btn-primary">Membership</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main style="min-height: calc(100vh - 200px); padding: 4rem 0;">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="breadcrumb">
+        <a href="index.html">Home</a> / <span>Sign up</span>
+      </div>
+
+      <div class="form-container">
+        <!-- Header -->
+        <div class="text-center mb-12">
+          <h1 class="mb-4">Join STIF</h1>
+          <p class="text-gray" style="font-size: 1.125rem;">Create your account and start your sustainability journey today</p>
+        </div>
+
+        <!-- Form -->
+        <form id="signup-form" class="form-card">
+          <!-- Name Fields -->
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="form-group">
+              <label for="firstName">
+                First Name <span style="color: #ef4444;">*</span>
+              </label>
+              <input type="text" id="firstName" name="firstName" placeholder="John" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">
+                Last Name <span style="color: #ef4444;">*</span>
+              </label>
+              <input type="text" id="lastName" name="lastName" placeholder="Doe" required>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email">
+              Email Address <span style="color: #ef4444;">*</span>
+            </label>
+            <input type="email" id="email" name="email" placeholder="john.doe@example.com" required>
+          </div>
+
+          <!-- Company -->
+          <div class="form-group">
+            <label for="company">Company Name</label>
+            <input type="text" id="company" name="company" placeholder="Your Company Ltd">
+          </div>
+
+          <!-- Job Title -->
+          <div class="form-group">
+            <label for="jobTitle">Job Title</label>
+            <input type="text" id="jobTitle" name="jobTitle" placeholder="Sustainability Manager">
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label for="password">
+              Password <span style="color: #ef4444;">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input type="password" id="password" name="password" placeholder="Min. 8 characters" required>
+              <button type="button" class="password-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group">
+            <label for="confirmPassword">
+              Confirm Password <span style="color: #ef4444;">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter your password" required>
+              <button type="button" class="password-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="border-top: 1px solid #e5e7eb; margin: 2rem 0;"></div>
+
+          <!-- Terms & Conditions Checkbox -->
+          <div class="checkbox-group">
+            <input type="checkbox" id="acceptedTerms" name="acceptedTerms" required>
+            <label for="acceptedTerms">
+              I accept the <a href="terms.html" class="text-primary" style="text-decoration: underline;">Terms & Conditions</a>
+              <span style="color: #ef4444;"> *</span>
+            </label>
+          </div>
+
+          <!-- Privacy Policy Checkbox -->
+          <div class="checkbox-group" style="margin-bottom: 2rem;">
+            <input type="checkbox" id="acceptedPrivacy" name="acceptedPrivacy" required>
+            <label for="acceptedPrivacy">
+              I accept the <a href="privacy.html" class="text-primary" style="text-decoration: underline;">Privacy Policy</a>
+              <span style="color: #ef4444;"> *</span>
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 500;">
+            Create Account
+          </button>
+
+          <!-- Sign In Link -->
+          <p class="text-center text-gray mt-6">
+            Already have an account? <a href="index.html" class="text-primary" style="text-decoration: underline;">Sign in</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="logo mb-6">stif.</div>
+          <div class="social-links">
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </a>
+            <a href="#" class="social-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                <rect x="2" y="9" width="4" height="12"></rect>
+                <circle cx="4" cy="4" r="2"></circle>
+              </svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Company</h3>
+          <ul>
+            <li><a href="about.html">About STIF</a></li>
+            <li><a href="index.html">Our Solutions</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Support</h3>
+          <ul>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="terms.html">Terms of service</a></li>
+            <li><a href="privacy.html">Privacy policy</a></li>
+            <li><a href="cookie-policy.html">Cookie policy</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Schedule an appointment</h3>
+          <button class="btn-primary" style="width: 100%;">📅 Schedule</button>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Membership Modal -->
+  <div id="membership-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="flex justify-between items-center mb-6">
+        <h2>Choose your account type</h2>
+        <button id="close-membership-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="flex flex-col gap-4">
+        <button id="business-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          Business
+        </button>
+        <button id="champion-btn" class="btn-primary" style="width: 100%; padding: 1rem; font-size: 1.125rem;">
+          ESG Champion
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="membership-modal.js"></script>
+  <script src="navigation-auth.js"></script>
+</body>
+</html>
+
