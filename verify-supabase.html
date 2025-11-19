@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Connection Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #10b981;
+    }
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #ef4444;
+    }
+    .info {
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #3b82f6;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Supabase Connection Test</h1>
+  <div id="results"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    const resultsDiv = document.getElementById('results');
+    
+    function addStatus(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `status ${type}`;
+      div.textContent = message;
+      resultsDiv.appendChild(div);
+    }
+
+    async function testConnection() {
+      addStatus('Testing Supabase connection...', 'info');
+      
+      // Check configuration
+      if (typeof SUPABASE_CONFIG === 'undefined') {
+        addStatus('❌ SUPABASE_CONFIG not found. Make sure supabase-config.js is loaded.', 'error');
+        return;
+      }
+
+      addStatus(`✅ Configuration loaded`, 'success');
+      addStatus(`📍 URL: ${SUPABASE_CONFIG.url}`, 'info');
+      addStatus(`🔑 Anon Key: ${SUPABASE_CONFIG.anonKey.substring(0, 20)}...`, 'info');
+
+      // Check if client is initialized
+      if (typeof supabaseClient === 'undefined' || !supabaseClient) {
+        addStatus('❌ Supabase client not initialized. Check your configuration.', 'error');
+        return;
+      }
+
+      addStatus('✅ Supabase client initialized', 'success');
+
+      // Test connection by trying to get auth session
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        
+        if (error) {
+          addStatus(`⚠️ Auth check error: ${error.message}`, 'error');
+        } else {
+          addStatus('✅ Connection successful! Supabase is working.', 'success');
+          if (session) {
+            addStatus(`✅ User is logged in: ${session.user.email}`, 'success');
+          } else {
+            addStatus('ℹ️ No active session (user not logged in)', 'info');
+          }
+        }
+      } catch (error) {
+        addStatus(`❌ Connection test failed: ${error.message}`, 'error');
+      }
+
+      // Test database connection (try to query a table)
+      try {
+        const { data, error } = await supabaseClient
+          .from('champions')
+          .select('count')
+          .limit(1);
+        
+        if (error) {
+          if (error.code === 'PGRST116' || error.message.includes('relation') || error.message.includes('does not exist')) {
+            addStatus('⚠️ Database tables not created yet. Run supabase-schema.sql in your Supabase SQL Editor.', 'error');
+          } else {
+            addStatus(`⚠️ Database query error: ${error.message}`, 'error');
+          }
+        } else {
+          addStatus('✅ Database connection successful! Tables exist.', 'success');
+        }
+      } catch (error) {
+        addStatus(`⚠️ Could not test database: ${error.message}`, 'error');
+      }
+    }
+
+    // Run test when page loads
+    testConnection();
+  </script>
+</body>
+</html>
+

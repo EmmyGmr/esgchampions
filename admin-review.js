@@ -2,9 +2,24 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Check if user is admin
-  const isAdmin = await AdminService.isAdmin();
-  if (!isAdmin) {
-    alert('Access denied. Admin privileges required.');
+  try {
+    const isAdmin = await AdminService.isAdmin();
+    if (!isAdmin) {
+      // Get current user info for debugging
+      const champion = await SupabaseService.getCurrentChampion();
+      const user = await SupabaseService.getCurrentUser();
+      
+      console.log('Current user:', user?.email);
+      console.log('Champion profile:', champion);
+      console.log('Is admin check result:', isAdmin);
+      
+      alert('Access denied. Admin privileges required.\n\nIf you just set yourself as admin, please:\n1. Log out\n2. Log back in\n3. Try accessing this page again.');
+      window.location.href = 'index.html';
+      return;
+    }
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    alert('Error checking admin status. Please check the console for details.');
     window.location.href = 'index.html';
     return;
   }

@@ -334,105 +334,12 @@
     </div>
   </div>
 
-  <script src="champion-auth.js"></script>
+  <!-- Supabase Integration -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="supabase-service.js"></script>
+  <script src="champion-auth-supabase.js"></script>
   <script src="membership-modal.js"></script>
-  <script>
-    // Update registration form handler to include new fields
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('champion-register-form');
-      if (form) {
-        form.addEventListener('submit', (e) => {
-          e.preventDefault();
-          
-          const formData = {
-            firstName: document.getElementById('champion-firstName').value.trim(),
-            lastName: document.getElementById('champion-lastName').value.trim(),
-            organization: document.getElementById('champion-organization').value.trim(),
-            role: document.getElementById('champion-role').value.trim(),
-            email: document.getElementById('champion-email').value.trim(),
-            mobile: document.getElementById('champion-mobile').value.trim(),
-            officePhone: document.getElementById('champion-office-phone').value.trim(),
-            linkedin: document.getElementById('champion-linkedin').value.trim(),
-            website: document.getElementById('champion-website').value.trim(),
-            competence: document.getElementById('champion-competence').value,
-            contributions: document.getElementById('champion-contributions').value.trim(),
-            primarySector: document.getElementById('champion-primary-sector').value,
-            expertisePanels: document.getElementById('champion-expertise-panels').value,
-            password: document.getElementById('champion-password').value,
-            confirmPassword: document.getElementById('champion-confirmPassword').value,
-            cla: document.getElementById('champion-cla').checked,
-            ndaCheck: document.getElementById('champion-nda-check').checked,
-            ndaSignature: document.getElementById('champion-nda-signature').value.trim(),
-            acceptedTerms: document.getElementById('champion-acceptedTerms').checked,
-            ipPolicy: document.getElementById('champion-ip-policy').checked
-          };
-
-          // Validation
-          if (!formData.firstName || !formData.lastName || !formData.organization || !formData.role || 
-              !formData.email || !formData.mobile || !formData.primarySector || !formData.expertisePanels || 
-              !formData.password || !formData.cla || !formData.ndaCheck || !formData.ndaSignature || !formData.acceptedTerms) {
-            alert('Please fill in all required fields');
-            return;
-          }
-
-          if (formData.password.length < 8) {
-            alert('Password must be at least 8 characters');
-            return;
-          }
-
-          if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match');
-            return;
-          }
-
-          // Check if email already exists
-          const champions = JSON.parse(localStorage.getItem('esg-champions') || '[]');
-          if (champions.find(c => c.email === formData.email)) {
-            alert('An account with this email already exists');
-            return;
-          }
-
-          // Create new champion with all fields
-          const newChampion = {
-            id: Date.now().toString(),
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            organization: formData.organization,
-            role: formData.role,
-            email: formData.email,
-            mobile: formData.mobile,
-            officePhone: formData.officePhone || '',
-            linkedin: formData.linkedin || '',
-            website: formData.website || '',
-            competence: formData.competence || '',
-            contributions: formData.contributions || '',
-            primarySector: formData.primarySector,
-            expertisePanels: formData.expertisePanels,
-            password: formData.password,
-            claAccepted: formData.cla,
-            ndaAccepted: formData.ndaCheck,
-            ndaSignature: formData.ndaSignature,
-            termsAccepted: formData.acceptedTerms,
-            ipPolicyAccepted: formData.ipPolicy,
-            createdAt: new Date().toISOString()
-          };
-
-          champions.push(newChampion);
-          localStorage.setItem('esg-champions', JSON.stringify(champions));
-
-          // Auto-login
-          localStorage.setItem('current-champion', JSON.stringify({
-            id: newChampion.id,
-            email: newChampion.email,
-            name: `${newChampion.firstName} ${newChampion.lastName}`
-          }));
-
-          alert('Registration successful! Redirecting to dashboard...');
-          window.location.href = 'champion-dashboard.html';
-        });
-      }
-    });
-  </script>
   <script src="navigation-auth.js"></script>
 </body>
 </html>

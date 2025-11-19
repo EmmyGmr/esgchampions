@@ -8,9 +8,21 @@ const AdminService = {
   async isAdmin() {
     try {
       const champion = await SupabaseService.getCurrentChampion();
-      return champion && champion.is_admin === true;
+      if (!champion) return false;
+      
+      // Check if is_admin column exists, fallback to false if it doesn't
+      if (champion.hasOwnProperty('is_admin')) {
+        return champion.is_admin === true;
+      } else {
+        console.warn('is_admin column not found in champions table. Run supabase-admin-schema.sql to add admin support.');
+        return false;
+      }
     } catch (error) {
       console.error('Check admin error:', error);
+      // If error is about column not existing, return false gracefully
+      if (error.message && error.message.includes('does not exist')) {
+        console.warn('Admin column not found. Please run the admin schema SQL.');
+      }
       return false;
     }
   },

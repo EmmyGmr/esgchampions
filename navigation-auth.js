@@ -1,9 +1,25 @@
 // Navigation authentication handler
 // Shows/hides Rankings and Logout buttons based on login status
+// Supports both Supabase and localStorage
 
-document.addEventListener('DOMContentLoaded', () => {
-  const currentChampion = localStorage.getItem('current-champion');
-  const isLoggedIn = !!currentChampion;
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check login status (try Supabase first, fallback to localStorage)
+  let isLoggedIn = false;
+  
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      isLoggedIn = !!user;
+    } catch (error) {
+      console.error('Error checking auth:', error);
+    }
+  }
+  
+  // Fallback to localStorage check
+  if (!isLoggedIn) {
+    const currentChampion = localStorage.getItem('current-champion') || localStorage.getItem('current-champion-id');
+    isLoggedIn = !!currentChampion;
+  }
 
   const nav = document.querySelector('nav');
   if (!nav) return;

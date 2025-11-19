@@ -16,6 +16,8 @@ const SupabaseService = {
    */
   async signUp(email, password, championData) {
     try {
+      console.log('Starting sign up process for:', email);
+      
       // 1. Create auth user
       const { data: authData, error: authError } = await supabaseClient.auth.signUp({
         email,
@@ -28,42 +30,68 @@ const SupabaseService = {
         }
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      if (authError) {
+        console.error('Auth sign up error:', authError);
+        throw authError;
+      }
+      
+      if (!authData.user) {
+        console.error('No user returned from auth signup');
+        throw new Error('Failed to create user account');
+      }
+
+      console.log('Auth user created:', authData.user.id);
 
       // 2. Create champion profile
+      const insertData = {
+        id: authData.user.id,
+        first_name: championData.firstName,
+        last_name: championData.lastName,
+        organization: championData.organization || null,
+        role: championData.role || null,
+        email: email,
+        mobile: championData.mobile || null,
+        office_phone: championData.officePhone || null,
+        linkedin: championData.linkedin || null,
+        website: championData.website || null,
+        competence: championData.competence || null,
+        contributions: championData.contributions || null,
+        primary_sector: championData.primarySector || null,
+        expertise_panels: championData.expertisePanels || null,
+        cla_accepted: championData.claAccepted || false,
+        nda_accepted: championData.ndaAccepted || false,
+        nda_signature: championData.ndaSignature || null,
+        terms_accepted: championData.termsAccepted || false,
+        ip_policy_accepted: championData.ipPolicyAccepted || false
+      };
+
+      console.log('Inserting champion profile:', insertData);
+
       const { data: championProfile, error: profileError } = await supabaseClient
         .from('champions')
-        .insert({
-          id: authData.user.id,
-          first_name: championData.firstName,
-          last_name: championData.lastName,
-          organization: championData.organization || null,
-          role: championData.role || null,
-          email: email,
-          mobile: championData.mobile || null,
-          office_phone: championData.officePhone || null,
-          linkedin: championData.linkedin || null,
-          website: championData.website || null,
-          competence: championData.competence || null,
-          contributions: championData.contributions || null,
-          primary_sector: championData.primarySector || null,
-          expertise_panels: championData.expertisePanels || null,
-          cla_accepted: championData.claAccepted || false,
-          nda_accepted: championData.ndaAccepted || false,
-          nda_signature: championData.ndaSignature || null,
-          terms_accepted: championData.termsAccepted || false,
-          ip_policy_accepted: championData.ipPolicyAccepted || false
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Champion profile insert error:', profileError);
+        console.error('Error details:', {
+          code: profileError.code,
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint
+        });
+        throw new Error(`Failed to create champion profile: ${profileError.message}`);
+      }
+
+      console.log('Champion profile created successfully:', championProfile);
 
       return { user: authData.user, champion: championProfile };
     } catch (error) {
       console.error('Sign up error:', error);
-      throw error;
+      // Provide more detailed error message
+      const errorMessage = error.message || error.toString() || 'Registration failed';
+      throw new Error(errorMessage);
     }
   },
 
