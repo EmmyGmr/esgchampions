@@ -70,8 +70,12 @@ DECLARE
   v_indicator_title TEXT;
   v_panel_title TEXT;
 BEGIN
-  -- Get review data
-  SELECT r.*, i.title as indicator_title, p.title as panel_title
+  -- Get review data with indicator and panel information
+  SELECT 
+    r.*,
+    i.title as indicator_title,
+    i.panel_id,
+    p.title as panel_title
   INTO v_review_data
   FROM reviews r
   JOIN indicators i ON i.id = r.indicator_id
@@ -82,6 +86,7 @@ BEGIN
     RAISE EXCEPTION 'Review not found or already processed';
   END IF;
   
+  -- Extract values from the record
   v_panel_id := v_review_data.panel_id;
   v_indicator_title := v_review_data.indicator_title;
   v_panel_title := v_review_data.panel_title;
@@ -143,8 +148,12 @@ DECLARE
   v_indicator_title TEXT;
   v_panel_title TEXT;
 BEGIN
-  -- Get review data
-  SELECT r.*, i.title as indicator_title, p.title as panel_title
+  -- Get review data with indicator and panel information
+  SELECT 
+    r.*,
+    i.title as indicator_title,
+    i.panel_id,
+    p.title as panel_title
   INTO v_review_data
   FROM reviews r
   JOIN indicators i ON i.id = r.indicator_id
@@ -155,6 +164,7 @@ BEGIN
     RAISE EXCEPTION 'Review not found';
   END IF;
   
+  -- Extract values from the record
   v_indicator_title := v_review_data.indicator_title;
   v_panel_title := v_review_data.panel_title;
   
@@ -178,4 +188,3 @@ BEGIN
   RETURN true;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
