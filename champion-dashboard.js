@@ -2,11 +2,31 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    // Check authentication and get current champion (async)
+    // Check authentication first
+    if (!supabaseClient) {
+      console.error('Supabase client not initialized');
+      window.location.href = 'champion-login.html';
+      return;
+    }
+
+    // Check if user is authenticated
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.log('User not authenticated, redirecting to login');
+      window.location.href = 'champion-login.html';
+      return;
+    }
+
+    console.log('Authenticated user:', user.id, user.email);
+
+    // Get current champion (async)
     const currentChampion = await DB.getCurrentChampion();
     
     if (!currentChampion) {
-      console.log('No champion found, redirecting to login');
+      console.error('Champion profile not found for user:', user.id);
+      console.log('User exists in auth but profile missing. Redirecting to login.');
+      // Clear session and redirect
+      await supabaseClient.auth.signOut();
       window.location.href = 'champion-login.html';
       return;
     }
@@ -14,31 +34,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Current champion loaded:', currentChampion);
 
     // Load account information
+    // Handle both snake_case (database) and camelCase (legacy) field names
     const firstName = currentChampion.first_name || currentChampion.firstName || '';
     const lastName = currentChampion.last_name || currentChampion.lastName || '';
     const fullName = `${firstName} ${lastName}`.trim() || 'Champion';
+    
+    console.log('Champion data:', {
+      firstName,
+      lastName,
+      email: currentChampion.email,
+      organization: currentChampion.organization,
+      expertise_panels: currentChampion.expertise_panels
+    });
     
     document.getElementById('champion-name').textContent = fullName;
     document.getElementById('account-fullname').textContent = fullName || 'Not specified';
     document.getElementById('account-email').textContent = currentChampion.email || 'Not specified';
     document.getElementById('account-organization').textContent = currentChampion.organization || 'Not specified';
     
-    // Handle expertise areas (could be string or array)
-    let expertiseText = '-';
-    if (currentChampion.expertise_panels) {
-      if (Array.isArray(currentChampion.expertise_panels)) {
-        expertiseText = currentChampion.expertise_panels.join(', ');
-      } else if (typeof currentChampion.expertise_panels === 'string') {
-        expertiseText = currentChampion.expertise_panels;
+    // Handle expertise areas (could be string, array, or null)
+    let expertiseText = 'Not specified';
+    try {
+      if (currentChampion.expertise_panels) {
+        if (Array.isArray(currentChampion.expertise_panels) && currentChampion.expertise_panels.length > 0) {
+          expertiseText = currentChampion.expertise_panels.join(', ');
+        } else if (typeof currentChampion.expertise_panels === 'string' && currentChampion.expertise_panels.trim()) {
+          expertiseText = currentChampion.expertise_panels;
+        }
+      } else if (currentChampion.expertise) {
+        if (Array.isArray(currentChampion.expertise) && currentChampion.expertise.length > 0) {
+          expertiseText = currentChampion.expertise.join(', ');
+        } else if (typeof currentChampion.expertise === 'string' && currentChampion.expertise.trim()) {
+          expertiseText = currentChampion.expertise;
+        }
       }
-    } else if (currentChampion.expertise) {
-      if (Array.isArray(currentChampion.expertise)) {
-        expertiseText = currentChampion.expertise.join(', ');
-      } else {
-        expertiseText = currentChampion.expertise;
-      }
+    } catch (expertiseError) {
+      console.error('Error processing expertise:', expertiseError);
+      expertiseText = 'Not specified';
     }
-    document.getElementById('account-expertise').textContent = expertiseText || 'Not specified';
+    
+    document.getElementById('account-expertise').textContent = expertiseText;
 
     // Load participation history (async)
     const history = await DB.getParticipationHistory(currentChampion.id);

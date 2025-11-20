@@ -160,7 +160,12 @@ const SupabaseService = {
   async getCurrentChampion() {
     try {
       const user = await this.getCurrentUser();
-      if (!user) return null;
+      if (!user) {
+        console.log('No authenticated user found');
+        return null;
+      }
+
+      console.log('Fetching champion profile for user:', user.id);
 
       const { data, error } = await supabaseClient
         .from('champions')
@@ -168,7 +173,22 @@ const SupabaseService = {
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching champion profile:', error);
+        // If profile doesn't exist, return null
+        if (error.code === 'PGRST116') {
+          console.log('Champion profile not found in database');
+          return null;
+        }
+        throw error;
+      }
+
+      if (!data) {
+        console.log('No champion data returned');
+        return null;
+      }
+
+      console.log('Champion profile fetched successfully:', data);
       return data;
     } catch (error) {
       console.error('Get current champion error:', error);
