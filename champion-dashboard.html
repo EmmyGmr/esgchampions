@@ -3,8 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ESG Champions - Dashboard</title>
+  <title>Your Sustainability Snapshot - STIF</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Dashboard Specific Styles */
+    .stif-score-card {
+      background: linear-gradient(135deg, #0D4D6C 0%, #1a6b8a 100%);
+      color: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    .stif-score-number {
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1;
+      margin: 1rem 0;
+    }
+    .mission-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .mission-progress {
+      height: 8px;
+      background-color: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .mission-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #0D4D6C 0%, #4A9FD8 100%);
+      transition: width 0.3s ease;
+    }
+    .panel-card-dashboard {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .panel-card-dashboard:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .impact-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .impact-high {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+    .impact-medium {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    .impact-low {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .status-not-started {
+      background-color: #f3f4f6;
+      color: #6b7280;
+    }
+    .status-in-progress {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    .status-completed {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .activity-rewards-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid #e5e7eb;
+      margin-bottom: 1.5rem;
+    }
+    .activity-rewards-tab {
+      padding: 0.75rem 1.5rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.2s;
+    }
+    .activity-rewards-tab:hover {
+      color: #0D4D6C;
+    }
+    .activity-rewards-tab.active {
+      color: #0D4D6C;
+      border-bottom-color: #0D4D6C;
+    }
+    .tab-content-panel {
+      display: none;
+    }
+    .tab-content-panel.active {
+      display: block;
+    }
+    .credit-score-card {
+      background: #0D4D6C;
+      color: white;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .credit-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .credit-item:last-child {
+      border-bottom: none;
+    }
+    .credit-item-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .star-rating {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .star-rating .star {
+      color: #fbbf24;
+      font-size: 1rem;
+    }
+    .total-credits {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 2px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .why-reviews-matter {
+      background: #f9fafb;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      margin-top: 3rem;
+    }
+    .why-reviews-matter ul {
+      list-style: none;
+      padding: 0;
+    }
+    .why-reviews-matter li {
+      padding: 0.75rem 0;
+      padding-left: 2rem;
+      position: relative;
+    }
+    .why-reviews-matter li:before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: #0D4D6C;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+    @media (max-width: 768px) {
+      .grid.grid-cols-3 {
+        grid-template-columns: 1fr;
+      }
+      .stif-score-number {
+        font-size: 3rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <!-- Header -->
@@ -28,77 +213,203 @@
   </header>
 
   <!-- Main Content -->
-  <main style="min-height: calc(100vh - 200px); padding: 4rem 0;">
+  <main style="min-height: calc(100vh - 200px); padding: 2rem 0;">
     <div class="container">
-      <!-- Breadcrumb -->
-      <div class="breadcrumb">
-        <a href="index.html">Home</a> / <span>ESG Champions Dashboard</span>
+      <!-- Page Title -->
+      <div class="mb-8">
+        <h1 class="mb-2">Your Sustainability Snapshot</h1>
+        <p class="text-gray">Welcome back, <span id="champion-name">Champion</span>!</p>
       </div>
 
-      <!-- Welcome Section -->
-      <div class="mb-12">
-        <h1 class="mb-4">Welcome back, <span id="champion-name">Champion</span>!</h1>
-        <p class="text-gray" style="font-size: 1.125rem;">Review your account information and panel participation history</p>
-      </div>
+      <!-- Top Section: STIF Score and Mission -->
+      <div class="grid grid-cols-3 gap-6 mb-8">
+        <!-- STIF Score Card -->
+        <div class="stif-score-card">
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">STIF Score</div>
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Improved by <span id="stif-score-improvement">+5</span></div>
+          <div class="stif-score-number" id="stif-score">62</div>
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 1rem;">out of 100</div>
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 1rem;">Reward + Impact</div>
+          <button class="btn-primary" style="width: 100%; background: white; color: #0D4D6C; border: none;" id="continue-where-left-off-btn">
+            Continue where you left off
+          </button>
+        </div>
 
-      <!-- Account Information Card -->
-      <div class="card mb-8">
-        <h2 class="mb-6">Account Information</h2>
-        <div class="grid grid-cols-2 gap-8">
-          <div>
-            <p class="text-gray mb-2">Full Name</p>
-            <p class="text-gray-dark" id="account-fullname" style="font-weight: 500;">-</p>
+        <!-- This Week's Mission Card 1 -->
+        <div class="mission-card">
+          <h3 style="margin-bottom: 0.75rem; font-size: 1.125rem;">This Week's Mission</h3>
+          <p style="color: #6b7280; font-size: 0.9375rem; margin-bottom: 1rem;" id="mission-description-1">
+            Complete 3 panels or validate 10 indicators before Sunday
+          </p>
+          <div class="mission-progress">
+            <div class="mission-progress-fill" id="mission-progress-1" style="width: 33%;"></div>
           </div>
-          <div>
-            <p class="text-gray mb-2">Email</p>
-            <p class="text-gray-dark" id="account-email" style="font-weight: 500;">-</p>
-          </div>
-          <div>
-            <p class="text-gray mb-2">Organization</p>
-            <p class="text-gray-dark" id="account-organization" style="font-weight: 500;">-</p>
-          </div>
-          <div>
-            <p class="text-gray mb-2">Expertise Areas</p>
-            <p class="text-gray-dark" id="account-expertise" style="font-weight: 500;">-</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+            <span style="font-size: 0.875rem; color: #6b7280;" id="mission-progress-text-1">Panels completed: 1/3</span>
+            <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="window.location.href='champion-panels.html'">
+              Continue where you left off
+            </button>
           </div>
         </div>
-      </div>
 
-      <!-- Panel Participation History -->
-      <div class="card mb-8">
-        <div class="flex justify-between items-center mb-6">
-          <h2>Panel Participation History</h2>
-          <div class="flex gap-4">
-            <a href="ranking.html" class="btn-primary">View Rankings</a>
-            <a href="champion-panels.html" class="btn-primary">Browse All Panels</a>
+        <!-- This Week's Mission Card 2 -->
+        <div class="mission-card">
+          <h3 style="margin-bottom: 0.75rem; font-size: 1.125rem;">This Week's Mission</h3>
+          <p style="color: #6b7280; font-size: 0.9375rem; margin-bottom: 1rem;" id="mission-description-2">
+            Complete 3 panels or validate 10 indicators before Sunday
+          </p>
+          <div class="mission-progress">
+            <div class="mission-progress-fill" id="mission-progress-2" style="width: 60%;"></div>
           </div>
-        </div>
-        <div id="participation-history">
-          <p class="text-gray">No panel participation yet. <a href="champion-panels.html" class="text-primary" style="text-decoration: underline;">Start reviewing panels</a></p>
-        </div>
-      </div>
-
-      <!-- Quick Stats -->
-      <div class="grid grid-cols-3 gap-8 mb-8">
-        <div class="card text-center">
-          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-panels">0</div>
-          <p class="text-gray">Panels Reviewed</p>
-        </div>
-        <div class="card text-center">
-          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-indicators">0</div>
-          <p class="text-gray">Indicators Voted</p>
-        </div>
-        <div class="card text-center">
-          <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;" id="stat-comments">0</div>
-          <p class="text-gray">Comments Posted</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+            <span style="font-size: 0.875rem; color: #6b7280;" id="mission-progress-text-2">Indicators validated: 6/10</span>
+            <div style="text-align: right;">
+              <div style="font-weight: 600; color: #0D4D6C;">150 points</div>
+              <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem; margin-top: 0.5rem;" onclick="window.location.href='champion-indicators.html'">
+                Continue Final
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Recent Activity -->
-      <div class="card">
-        <h2 class="mb-6">Recent Activity</h2>
-        <div id="recent-activity">
-          <p class="text-gray">No recent activity</p>
+      <!-- Recommended Panels Section -->
+      <div class="mb-8">
+        <h2 class="mb-6">Recommended Panels to Start With</h2>
+        <div class="grid grid-cols-3 gap-6" id="recommended-panels">
+          <!-- Recommended panels will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Main Content Area: Panels and Activity/Rewards -->
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Left Column: Panels -->
+        <div style="grid-column: span 2;">
+          <h2 class="mb-6">Panels</h2>
+          <div id="all-panels-grid" class="grid grid-cols-2 gap-4">
+            <!-- All panels will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Right Column: Activity & Rewards -->
+        <div>
+          <div class="activity-rewards-tabs">
+            <button class="activity-rewards-tab active" data-tab="activity">Activity</button>
+            <button class="activity-rewards-tab" data-tab="rewards">Rewards</button>
+          </div>
+
+          <!-- Activity Tab -->
+          <div id="activity-tab" class="tab-content-panel active">
+            <div class="card">
+              <h3 class="mb-4">Recent Activity</h3>
+              <div id="recent-activity-list">
+                <!-- Activity items will be loaded here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Rewards Tab -->
+          <div id="rewards-tab" class="tab-content-panel">
+            <div class="credit-score-card">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <span style="font-size: 1.5rem;">⭐</span>
+                <h3 style="margin: 0; color: white;">Credit Score Summary</h3>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>⭐</span>
+                  <span>Indicator Necessity</span>
+                </div>
+                <span style="font-weight: 600;">+2</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>✓</span>
+                  <span>Gap Detection / Missing Requirement</span>
+                </div>
+                <span style="font-weight: 600;">+4</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>●</span>
+                  <span>SME Reporting Difficulty (Moderate)</span>
+                </div>
+                <span style="font-weight: 600;">+2</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>🏷️</span>
+                  <span>Materiality Tags (2 selected)</span>
+                </div>
+                <span style="font-weight: 600;">+2</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>⭐</span>
+                  <span>Impact Score on SMEs</span>
+                  <div class="star-rating">
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                    <span class="star">★</span>
+                  </div>
+                </div>
+                <span style="font-weight: 600;">+4</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>✓</span>
+                  <span>Version Appropriateness</span>
+                </div>
+                <span style="font-weight: 600;">+1</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>✨</span>
+                  <span>Validation Response Quality</span>
+                </div>
+                <span style="font-weight: 600;">+5</span>
+              </div>
+              
+              <div class="credit-item">
+                <div class="credit-item-label">
+                  <span>💬</span>
+                  <span>Additional Comments</span>
+                </div>
+                <span style="font-weight: 600;">+2</span>
+              </div>
+              
+              <div class="total-credits">
+                <span>⭐</span>
+                <span>TOTAL CREDITS EARNED: <span id="total-credits-display">22</span> Credits</span>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1rem;">
+              <button class="btn-secondary" id="view-credits-details-btn" style="width: 100%;">View details</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Why Your Reviews Matter Section -->
+      <div class="why-reviews-matter">
+        <h2 class="mb-6">Why Your Reviews Matter</h2>
+        <ul>
+          <li>You help SMEs focus on what truly matters by prioritizing relevant ESG metrics and indicators</li>
+          <li>You train the STIF intelligence engine to power expert insights and reports that improve sustainability scores</li>
+          <li>Each completed panel improves confidence in sustainability reporting and drives real-world impact</li>
+        </ul>
+        <div style="margin-top: 1.5rem; text-align: center;">
+          <button class="btn-primary" id="scoring-calculated-btn">See how scoring is calculated</button>
         </div>
       </div>
     </div>
@@ -149,6 +460,98 @@
       </div>
     </div>
   </footer>
+
+  <!-- Scoring Calculation Modal -->
+  <div id="scoring-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="flex justify-between items-center mb-6">
+        <h2>How Scoring is Calculated</h2>
+        <button id="close-scoring-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="credit-score-card" style="background: white; color: #111827;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; color: #0D4D6C;">
+          <span style="font-size: 1.5rem;">⭐</span>
+          <h3 style="margin: 0;">Credit Score Summary</h3>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>⭐</span>
+            <span>Indicator Necessity</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+2</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>✓</span>
+            <span>Gap Detection / Missing Requirement</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+4</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>●</span>
+            <span>SME Reporting Difficulty (Moderate)</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+2</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>🏷️</span>
+            <span>Materiality Tags (2 selected)</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+2</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>⭐</span>
+            <span>Impact Score on SMEs</span>
+            <div class="star-rating">
+              <span class="star">★</span>
+              <span class="star">★</span>
+              <span class="star">★</span>
+              <span class="star">★</span>
+              <span class="star">★</span>
+            </div>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+4</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>✓</span>
+            <span>Version Appropriateness</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+1</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>✨</span>
+            <span>Validation Response Quality</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+5</span>
+        </div>
+        
+        <div class="credit-item" style="border-bottom-color: #e5e7eb;">
+          <div class="credit-item-label">
+            <span>💬</span>
+            <span>Additional Comments</span>
+          </div>
+          <span style="font-weight: 600; color: #0D4D6C;">+2</span>
+        </div>
+        
+        <div class="total-credits" style="color: #0D4D6C; border-top-color: #e5e7eb;">
+          <span>⭐</span>
+          <span>TOTAL CREDITS EARNED: <span id="modal-total-credits">22</span> Credits</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Membership Modal -->
   <div id="membership-modal" class="modal hidden">

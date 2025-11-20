@@ -206,16 +206,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (indicators.length === 0) {
         indicatorsList.innerHTML = '<p class="text-gray">No indicators found for this panel.</p>';
       } else {
-        indicatorsList.innerHTML = indicators.map((indicator, index) => `
-          <div style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; gap: 0.75rem;">
-            <input type="checkbox" id="indicator-${indicator.id}" value="${indicator.id}" 
-                   class="indicator-checkbox" style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
-            <label for="indicator-${indicator.id}" style="flex: 1; cursor: pointer;">
-              <div style="font-weight: 500; margin-bottom: 0.25rem;">${indicator.title}</div>
-              <div class="text-gray" style="font-size: 0.875rem;">${indicator.description || ''}</div>
-            </label>
-          </div>
-        `).join('');
+        indicatorsList.innerHTML = indicators.map((indicator, index) => {
+          // Determine tags (defaults if not in database)
+          const importance = indicator.importance || 'High';
+          const difficulty = indicator.difficulty || 'Moderate';
+          const estimatedTime = indicator.estimated_time || '3-5 min';
+          const frameworks = indicator.frameworks || 'GRI 305-1';
+          const impactStars = indicator.impact_stars || 5;
+          
+          // Generate star rating
+          const stars = '★'.repeat(impactStars) + '☆'.repeat(5 - impactStars);
+          
+          // Tag styling
+          const importanceClass = importance.toLowerCase() === 'high' ? 'tag-high' : importance.toLowerCase() === 'medium' ? 'tag-medium' : 'tag-low';
+          const difficultyClass = difficulty.toLowerCase() === 'easy' ? 'tag-easy' : difficulty.toLowerCase() === 'moderate' ? 'tag-moderate' : difficulty.toLowerCase() === 'difficult' ? 'tag-difficult' : 'tag-complex';
+          
+          return `
+            <div style="padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; gap: 0.75rem;">
+              <input type="checkbox" id="indicator-${indicator.id}" value="${indicator.id}" 
+                     class="indicator-checkbox" style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
+              <label for="indicator-${indicator.id}" style="flex: 1; cursor: pointer;">
+                <div style="font-weight: 500; margin-bottom: 0.5rem; font-size: 1rem;">${indicator.title}</div>
+                <div class="text-gray" style="font-size: 0.875rem; margin-bottom: 0.75rem;">${indicator.description || ''}</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                  <span class="indicator-tag ${importanceClass}">${importance} Importance</span>
+                  <span class="indicator-tag ${difficultyClass}">${difficulty}</span>
+                  <span class="indicator-tag tag-time">${estimatedTime}</span>
+                  <span class="indicator-tag tag-framework">${frameworks}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem; color: #fbbf24; font-size: 0.875rem;">
+                  <span>Impact:</span>
+                  <span style="font-size: 1rem;">${stars}</span>
+                </div>
+              </label>
+            </div>
+          `;
+        }).join('');
       }
 
       const modal = document.getElementById('indicator-selection-modal');

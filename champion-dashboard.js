@@ -1,4 +1,4 @@
-// Dashboard functionality with Supabase
+// Dashboard functionality with gamification and enhanced features
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -24,8 +24,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!currentChampion) {
       console.error('Champion profile not found for user:', user.id);
-      console.log('User exists in auth but profile missing. Redirecting to login.');
-      // Clear session and redirect
       await supabaseClient.auth.signOut();
       window.location.href = 'champion-login.html';
       return;
@@ -33,140 +31,327 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('Current champion loaded:', currentChampion);
 
-    // Load account information
-    // Handle both snake_case (database) and camelCase (legacy) field names
+    // Load champion name
     const firstName = currentChampion.first_name || currentChampion.firstName || '';
     const lastName = currentChampion.last_name || currentChampion.lastName || '';
     const fullName = `${firstName} ${lastName}`.trim() || 'Champion';
-    
-    console.log('Champion data:', {
-      firstName,
-      lastName,
-      email: currentChampion.email,
-      organization: currentChampion.organization,
-      expertise_panels: currentChampion.expertise_panels
-    });
-    
-    document.getElementById('champion-name').textContent = fullName;
-    document.getElementById('account-fullname').textContent = fullName || 'Not specified';
-    document.getElementById('account-email').textContent = currentChampion.email || 'Not specified';
-    document.getElementById('account-organization').textContent = currentChampion.organization || 'Not specified';
-    
-    // Handle expertise areas (could be string, array, or null)
-    let expertiseText = 'Not specified';
-    try {
-      if (currentChampion.expertise_panels) {
-        if (Array.isArray(currentChampion.expertise_panels) && currentChampion.expertise_panels.length > 0) {
-          expertiseText = currentChampion.expertise_panels.join(', ');
-        } else if (typeof currentChampion.expertise_panels === 'string' && currentChampion.expertise_panels.trim()) {
-          expertiseText = currentChampion.expertise_panels;
-        }
-      } else if (currentChampion.expertise) {
-        if (Array.isArray(currentChampion.expertise) && currentChampion.expertise.length > 0) {
-          expertiseText = currentChampion.expertise.join(', ');
-        } else if (typeof currentChampion.expertise === 'string' && currentChampion.expertise.trim()) {
-          expertiseText = currentChampion.expertise;
-        }
-      }
-    } catch (expertiseError) {
-      console.error('Error processing expertise:', expertiseError);
-      expertiseText = 'Not specified';
-    }
-    
-    document.getElementById('account-expertise').textContent = expertiseText;
+    const nameEl = document.getElementById('champion-name');
+    if (nameEl) nameEl.textContent = fullName;
 
-    // Load participation history (async)
-    const history = await DB.getParticipationHistory(currentChampion.id);
-    const historyContainer = document.getElementById('participation-history');
-    
-    if (!history || history.length === 0) {
-      historyContainer.innerHTML = '<p class="text-gray">No panel participation yet. <a href="champion-panels.html" class="text-primary" style="text-decoration: underline;">Start reviewing panels</a></p>';
-    } else {
-      historyContainer.innerHTML = history.map(item => {
-        const panel = item.panel || {};
-        const panelIcon = panel.icon || '📋';
-        const panelTitle = panel.title || 'Unknown Panel';
-        const panelId = panel.id || '';
+    // ============================================
+    // CALCULATE STIF SCORE
+    // ============================================
+    async function calculateSTIFScore() {
+      try {
+        // Get all reviews (accepted ones count more)
+        const [reviewsResult, votesResult, commentsResult] = await Promise.all([
+          supabaseClient
+            .from('reviews')
+            .select('id, status')
+            .eq('champion_id', currentChampion.id),
+          supabaseClient
+            .from('votes')
+            .select('id')
+            .eq('champion_id', currentChampion.id),
+          supabaseClient
+            .from('comments')
+            .select('id')
+            .eq('champion_id', currentChampion.id)
+        ]);
+
+        const reviews = reviewsResult.data || [];
+        const votes = votesResult.data || [];
+        const comments = commentsResult.data || [];
+
+        // Calculate score: base score from activity
+        // Accepted reviews: 10 points each
+        // Pending reviews: 5 points each
+        // Votes: 2 points each
+        // Comments: 3 points each
+        const acceptedReviews = reviews.filter(r => r.status === 'accepted').length;
+        const pendingReviews = reviews.filter(r => r.status === 'pending').length;
         
-        return `
-          <div class="participation-item" style="padding: 1.5rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 1rem;">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 style="margin-bottom: 0.5rem;">
-                  <a href="champion-indicators.html?panel=${panelId}" class="text-primary" style="text-decoration: none;">${panelIcon} ${panelTitle}</a>
-                </h3>
-                <p class="text-gray" style="font-size: 0.875rem;">
-                  ${item.votesCount || 0} votes • ${item.commentsCount || 0} comments
-                </p>
-              </div>
-              ${item.lastActivity ? `
-                <div class="text-gray" style="font-size: 0.875rem;">
-                  ${new Date(item.lastActivity).toLocaleDateString()}
-                </div>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
+        const score = (acceptedReviews * 10) + (pendingReviews * 5) + (votes.length * 2) + (comments.length * 3);
+        const normalizedScore = Math.min(100, Math.round(score / 2)); // Normalize to 0-100
+
+        // Calculate improvement (compare with previous week)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        
+        const [oldReviewsResult] = await Promise.all([
+          supabaseClient
+            .from('reviews')
+            .select('id, status')
+            .eq('champion_id', currentChampion.id)
+            .lt('created_at', oneWeekAgo.toISOString())
+        ]);
+
+        const oldReviews = oldReviewsResult.data || [];
+        const oldAccepted = oldReviews.filter(r => r.status === 'accepted').length;
+        const oldScore = (oldAccepted * 10) + (oldReviews.length * 5);
+        const oldNormalizedScore = Math.min(100, Math.round(oldScore / 2));
+        
+        const improvement = normalizedScore - oldNormalizedScore;
+
+        return { score: normalizedScore, improvement };
+      } catch (error) {
+        console.error('Error calculating STIF score:', error);
+        return { score: 0, improvement: 0 };
+      }
     }
 
-    // Calculate stats from Supabase
-    try {
-      const [votesResult, commentsResult, reviewsResult] = await Promise.all([
-        supabaseClient
-          .from('votes')
-          .select('indicator_id')
-          .eq('champion_id', currentChampion.id),
-        supabaseClient
-          .from('comments')
-          .select('id')
-          .eq('champion_id', currentChampion.id),
-        supabaseClient
-          .from('reviews')
-          .select('indicator_id')
-          .eq('champion_id', currentChampion.id)
-      ]);
+    const { score, improvement } = await calculateSTIFScore();
+    const scoreEl = document.getElementById('stif-score');
+    if (scoreEl) scoreEl.textContent = score;
+    const improvementEl = document.getElementById('stif-score-improvement');
+    if (improvementEl) {
+      improvementEl.textContent = improvement >= 0 ? `+${improvement}` : `${improvement}`;
+    }
 
-      const votes = votesResult.data || [];
-      const comments = commentsResult.data || [];
-      const reviews = reviewsResult.data || [];
-      
-      // Get unique indicators from reviews
-      const uniqueIndicators = new Set(reviews.map(r => r.indicator_id));
-      
-      document.getElementById('stat-panels').textContent = history.length;
-      document.getElementById('stat-indicators').textContent = uniqueIndicators.size;
-      document.getElementById('stat-comments').textContent = comments.length;
+    // Continue where left off button
+    const continueBtn = document.getElementById('continue-where-left-off-btn');
+    if (continueBtn) {
+      continueBtn.addEventListener('click', () => {
+        window.location.href = 'champion-panels.html';
+      });
+    }
 
-      // Load recent activity from Supabase
-      const [recentVotesResult, recentCommentsResult] = await Promise.all([
-        supabaseClient
-          .from('votes')
-          .select('*, indicators:indicator_id(id, title, panel_id)')
-          .eq('champion_id', currentChampion.id)
-          .order('created_at', { ascending: false })
-          .limit(5),
-        supabaseClient
-          .from('comments')
-          .select('*, indicators:indicator_id(id, title, panel_id)')
-          .eq('champion_id', currentChampion.id)
-          .order('created_at', { ascending: false })
-          .limit(5)
-      ]);
+    // ============================================
+    // CALCULATE MISSION PROGRESS
+    // ============================================
+    async function calculateMissionProgress() {
+      try {
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+        weekStart.setHours(0, 0, 0, 0);
 
-      const recentVotes = recentVotesResult.data || [];
-      const recentComments = recentCommentsResult.data || [];
+        const [reviewsResult] = await Promise.all([
+          supabaseClient
+            .from('reviews')
+            .select('indicator_id, created_at, indicators:indicator_id(panel_id)')
+            .eq('champion_id', currentChampion.id)
+            .gte('created_at', weekStart.toISOString())
+        ]);
 
-      const allActivity = [
-        ...recentVotes.map(v => ({ ...v, type: 'vote', created_at: v.created_at })),
-        ...recentComments.map(c => ({ ...c, type: 'comment', created_at: c.created_at }))
-      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+        // Get unique panels
+        const panelIds = new Set();
+        if (reviewsResult.data) {
+          reviewsResult.data.forEach(r => {
+            if (r.indicators && r.indicators.panel_id) {
+              panelIds.add(r.indicators.panel_id);
+            }
+          });
+        }
 
-      const activityContainer = document.getElementById('recent-activity');
-      if (allActivity.length === 0) {
-        activityContainer.innerHTML = '<p class="text-gray">No recent activity</p>';
-      } else {
-        const activityHtml = await Promise.all(allActivity.map(async (activity) => {
+        const panelsCompleted = panelIds.size;
+        const indicatorsValidated = reviewsResult.data?.length || 0;
+
+        // Mission 1: Complete 3 panels
+        const mission1Progress = Math.min(100, (panelsCompleted / 3) * 100);
+        const mission1Text = `Panels completed: ${panelsCompleted}/3`;
+
+        // Mission 2: Validate 10 indicators
+        const mission2Progress = Math.min(100, (indicatorsValidated / 10) * 100);
+        const mission2Text = `Indicators validated: ${indicatorsValidated}/10`;
+        const mission2Points = indicatorsValidated * 15; // 15 points per indicator
+
+        return {
+          mission1: { progress: mission1Progress, text: mission1Text },
+          mission2: { progress: mission2Progress, text: mission2Text, points: mission2Points }
+        };
+      } catch (error) {
+        console.error('Error calculating mission progress:', error);
+        return {
+          mission1: { progress: 0, text: 'Panels completed: 0/3' },
+          mission2: { progress: 0, text: 'Indicators validated: 0/10', points: 0 }
+        };
+      }
+    }
+
+    const missionProgress = await calculateMissionProgress();
+    const progress1El = document.getElementById('mission-progress-1');
+    if (progress1El) progress1El.style.width = `${missionProgress.mission1.progress}%`;
+    const text1El = document.getElementById('mission-progress-text-1');
+    if (text1El) text1El.textContent = missionProgress.mission1.text;
+    const progress2El = document.getElementById('mission-progress-2');
+    if (progress2El) progress2El.style.width = `${missionProgress.mission2.progress}%`;
+    const text2El = document.getElementById('mission-progress-text-2');
+    if (text2El) text2El.textContent = missionProgress.mission2.text;
+
+    // ============================================
+    // LOAD RECOMMENDED PANELS
+    // ============================================
+    async function loadRecommendedPanels() {
+      try {
+        const panels = await DB.getPanels();
+        if (!Array.isArray(panels) || panels.length === 0) return;
+
+        // Get panels with most indicators (recommended)
+        const panelsWithCounts = await Promise.all(panels.map(async (panel) => {
+          const indicators = await DB.getIndicators(panel.id);
+          return { ...panel, indicatorCount: indicators?.length || 0 };
+        }));
+
+        // Sort by indicator count and take top 3
+        const recommended = panelsWithCounts
+          .sort((a, b) => b.indicatorCount - a.indicatorCount)
+          .slice(0, 3);
+
+        const container = document.getElementById('recommended-panels');
+        if (!container) return;
+
+        container.innerHTML = recommended.map(panel => {
+          const status = 'Not Started';
+          const impact = panel.category === 'environmental' ? 'High' : panel.category === 'social' ? 'Medium' : 'Low';
+          const impactClass = impact.toLowerCase() === 'high' ? 'impact-high' : impact.toLowerCase() === 'medium' ? 'impact-medium' : 'impact-low';
+          const statusClass = status.toLowerCase().replace(' ', '-');
+          const estimatedTime = '10-13 min';
+          const points = panel.indicatorCount * 10;
+
+          return `
+            <div class="panel-card-dashboard">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                  <h3 style="margin-bottom: 0.5rem; font-size: 1.125rem;">${panel.icon || '📋'} ${panel.title}</h3>
+                  <span class="impact-badge ${impactClass}">Impact: ${impact}</span>
+                </div>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span style="font-size: 0.875rem; color: #6b7280;">Estimated time</span>
+                  <span style="font-size: 0.875rem; color: #6b7280;">${estimatedTime}</span>
+                </div>
+                <div class="mission-progress" style="height: 6px;">
+                  <div class="mission-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                  <span class="status-badge status-${statusClass}">${status}</span>
+                  <span style="font-size: 0.875rem; color: #0D4D6C; font-weight: 600;">+${points} points</span>
+                </div>
+              </div>
+              <button class="btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" onclick="window.location.href='champion-indicators.html?panel=${panel.id}'">
+                ${status === 'Not Started' ? 'Continue Panel' : 'View details >'}
+              </button>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading recommended panels:', error);
+      }
+    }
+
+    // ============================================
+    // LOAD ALL PANELS
+    // ============================================
+    async function loadAllPanels() {
+      try {
+        const panels = await DB.getPanels();
+        if (!Array.isArray(panels) || panels.length === 0) return;
+
+        const container = document.getElementById('all-panels-grid');
+        if (!container) return;
+
+        // Get panel progress for each panel
+        const panelsWithProgress = await Promise.all(panels.map(async (panel) => {
+          const indicators = await DB.getIndicators(panel.id);
+          const indicatorIds = indicators?.map(i => i.id) || [];
+          
+          if (indicatorIds.length === 0) {
+            return { ...panel, progress: 0, status: 'Not Started', reviewedCount: 0 };
+          }
+
+          const reviewsResult = await supabaseClient
+            .from('reviews')
+            .select('indicator_id')
+            .eq('champion_id', currentChampion.id)
+            .in('indicator_id', indicatorIds);
+
+          const reviewedCount = reviewsResult.data?.length || 0;
+          const progress = (reviewedCount / indicatorIds.length) * 100;
+          let status = 'Not Started';
+          if (progress === 100) status = 'Completed';
+          else if (progress > 0) status = 'In Progress';
+
+          return { ...panel, progress, status, reviewedCount, totalIndicators: indicatorIds.length };
+        }));
+
+        container.innerHTML = panelsWithProgress.map(panel => {
+          const impact = panel.category === 'environmental' ? 'High' : panel.category === 'social' ? 'Medium' : 'Low';
+          const impactClass = impact.toLowerCase() === 'high' ? 'impact-high' : impact.toLowerCase() === 'medium' ? 'impact-medium' : 'impact-low';
+          const statusClass = panel.status.toLowerCase().replace(' ', '-');
+          const estimatedTime = '10-15 min';
+          const points = panel.reviewedCount * 10;
+
+          return `
+            <div class="panel-card-dashboard">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div>
+                  <h3 style="margin-bottom: 0.5rem; font-size: 1.125rem;">${panel.icon || '📋'} ${panel.title}</h3>
+                  <span class="impact-badge ${impactClass}">Impact ${impact}</span>
+                </div>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span style="font-size: 0.875rem; color: #6b7280;">Estimated time</span>
+                  <span style="font-size: 0.875rem; color: #6b7280;">${estimatedTime}</span>
+                </div>
+                <div class="mission-progress" style="height: 6px;">
+                  <div class="mission-progress-fill" style="width: ${panel.progress}%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                  <span class="status-badge status-${statusClass}">${panel.status}</span>
+                  ${points > 0 ? `<span style="font-size: 0.875rem; color: #0D4D6C; font-weight: 600;">+${points} pts</span>` : ''}
+                </div>
+              </div>
+              <button class="btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" onclick="window.location.href='champion-indicators.html?panel=${panel.id}'">
+                ${panel.status === 'Completed' ? 'View details' : 'Review Indicators'}
+              </button>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        console.error('Error loading all panels:', error);
+      }
+    }
+
+    // ============================================
+    // LOAD ACTIVITY
+    // ============================================
+    async function loadActivity() {
+      try {
+        const [recentVotesResult, recentCommentsResult] = await Promise.all([
+          supabaseClient
+            .from('votes')
+            .select('*, indicators:indicator_id(id, title, panel_id)')
+            .eq('champion_id', currentChampion.id)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabaseClient
+            .from('comments')
+            .select('*, indicators:indicator_id(id, title, panel_id)')
+            .eq('champion_id', currentChampion.id)
+            .order('created_at', { ascending: false })
+            .limit(10)
+        ]);
+
+        const recentVotes = recentVotesResult.data || [];
+        const recentComments = recentCommentsResult.data || [];
+
+        const allActivity = [
+          ...recentVotes.map(v => ({ ...v, type: 'vote', created_at: v.created_at })),
+          ...recentComments.map(c => ({ ...c, type: 'comment', created_at: c.created_at }))
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 10);
+
+        const container = document.getElementById('recent-activity-list');
+        if (!container) return;
+
+        if (allActivity.length === 0) {
+          container.innerHTML = '<p class="text-gray" style="text-align: center; padding: 2rem;">No recent activity</p>';
+          return;
+        }
+
+        container.innerHTML = await Promise.all(allActivity.map(async (activity) => {
           const indicator = activity.indicators || (activity.indicator_id ? await DB.getIndicator(activity.indicator_id) : null);
           const panel = indicator && indicator.panel_id ? await DB.getPanel(indicator.panel_id) : null;
           const isVote = activity.type === 'vote';
@@ -188,24 +373,94 @@ document.addEventListener('DOMContentLoaded', async () => {
               </div>
             </div>
           `;
-        }));
-        activityContainer.innerHTML = activityHtml.join('');
+        })).then(html => html.join(''));
+      } catch (error) {
+        console.error('Error loading activity:', error);
       }
-    } catch (statsError) {
-      console.error('Error loading stats:', statsError);
-      // Set defaults if stats fail to load
-      document.getElementById('stat-panels').textContent = '0';
-      document.getElementById('stat-indicators').textContent = '0';
-      document.getElementById('stat-comments').textContent = '0';
     }
+
+    // ============================================
+    // CALCULATE CREDITS
+    // ============================================
+    async function calculateCredits() {
+      try {
+        const reviewsResult = await supabaseClient
+          .from('reviews')
+          .select('*')
+          .eq('champion_id', currentChampion.id);
+
+        const reviews = reviewsResult.data || [];
+        const totalCredits = reviews.length * 22; // 22 credits per complete review
+
+        const creditsEl = document.getElementById('total-credits-display');
+        if (creditsEl) creditsEl.textContent = totalCredits;
+        const modalCreditsEl = document.getElementById('modal-total-credits');
+        if (modalCreditsEl) modalCreditsEl.textContent = totalCredits;
+      } catch (error) {
+        console.error('Error calculating credits:', error);
+      }
+    }
+
+    // ============================================
+    // TAB SWITCHING
+    // ============================================
+    const activityRewardsTabs = document.querySelectorAll('.activity-rewards-tab');
+    activityRewardsTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetTab = tab.dataset.tab;
+        
+        activityRewardsTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        document.querySelectorAll('.tab-content-panel').forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `${targetTab}-tab`) {
+            content.classList.add('active');
+          }
+        });
+
+        if (targetTab === 'activity') {
+          loadActivity();
+        }
+      });
+    });
+
+    // ============================================
+    // SCORING MODAL
+    // ============================================
+    const scoringBtn = document.getElementById('scoring-calculated-btn');
+    const scoringModal = document.getElementById('scoring-modal');
+    const closeScoringModal = document.getElementById('close-scoring-modal');
+
+    if (scoringBtn && scoringModal) {
+      scoringBtn.addEventListener('click', () => {
+        scoringModal.classList.remove('hidden');
+      });
+    }
+
+    if (closeScoringModal) {
+      closeScoringModal.addEventListener('click', () => {
+        scoringModal.classList.add('hidden');
+      });
+    }
+
+    if (scoringModal) {
+      scoringModal.addEventListener('click', (e) => {
+        if (e.target === scoringModal) {
+          scoringModal.classList.add('hidden');
+        }
+      });
+    }
+
+    // Load all data
+    await loadRecommendedPanels();
+    await loadAllPanels();
+    await loadActivity();
+    await calculateCredits();
 
   } catch (error) {
     console.error('Error loading dashboard:', error);
-    // Show error message to user
-    document.getElementById('champion-name').textContent = 'Error loading profile';
-    document.getElementById('account-fullname').textContent = 'Error: ' + (error.message || 'Failed to load data');
+    const nameEl = document.getElementById('champion-name');
+    if (nameEl) nameEl.textContent = 'Error loading profile';
   }
-
-  // Logout is handled by logout.js
 });
-

@@ -357,7 +357,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       await Promise.all(savePromises);
       
-      alert(`Successfully submitted ${reviewsToSubmit.length} review${reviewsToSubmit.length !== 1 ? 's' : ''}!\n\nYour reviews are now pending admin approval.`);
+      // Show success popup
+      showSubmissionSuccess();
       
       // Redirect to panels page
       window.location.href = 'champion-panels.html';
