@@ -702,6 +702,119 @@ const SupabaseService = {
       console.error('Get participation history error:', error);
       return [];
     }
+  },
+
+  // ============================================
+  // NOTIFICATIONS METHODS
+  // ============================================
+
+  /**
+   * Get notifications for current champion
+   */
+  async getNotifications(limit = 50) {
+    try {
+      const champion = await this.getCurrentChampion();
+      if (!champion) return [];
+
+      const { data, error } = await supabaseClient
+        .from('notifications')
+        .select('*')
+        .eq('champion_id', champion.id)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Get notifications error:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Mark notification as read
+   */
+  async markNotificationRead(notificationId) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notificationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Mark notification read error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get unread notification count
+   */
+  async getUnreadNotificationCount() {
+    try {
+      const champion = await this.getCurrentChampion();
+      if (!champion) return 0;
+
+      const { data, error } = await supabaseClient
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('champion_id', champion.id)
+        .eq('read', false);
+
+      if (error) throw error;
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Get unread notification count error:', error);
+      return 0;
+    }
+  },
+
+  /**
+   * Get reviews with status for current champion
+   */
+  async getChampionReviews() {
+    try {
+      const champion = await this.getCurrentChampion();
+      if (!champion) return [];
+
+      const { data, error } = await supabaseClient
+        .from('reviews')
+        .select(`
+          *,
+          indicators:indicator_id (
+            id,
+            title,
+            panel_id
+          )
+        `)
+        .eq('champion_id', champion.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Get panel info for each review
+      const reviewsWithPanels = await Promise.all(
+        (data || []).map(async (review) => {
+          if (review.indicators && review.indicators.panel_id) {
+            const panel = await this.getPanel(review.indicators.panel_id);
+            return {
+              ...review,
+              panel: panel
+            };
+          }
+          return review;
+        })
+      );
+
+      return reviewsWithPanels;
+    } catch (error) {
+      console.error('Get champion reviews error:', error);
+      return [];
+    }
   }
 };
 
