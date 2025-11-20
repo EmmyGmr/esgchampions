@@ -53,6 +53,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Drop existing functions if they exist (to allow return type changes)
+DROP FUNCTION IF EXISTS accept_review(UUID, UUID);
+DROP FUNCTION IF EXISTS delete_review(UUID, UUID, TEXT);
+
 -- Update accept_review function to create notification
 CREATE OR REPLACE FUNCTION accept_review(
   p_review_id UUID,
