@@ -38,19 +38,48 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Signing in...';
 
+        console.log('Attempting login for:', email);
+
         // Sign in with Supabase
         const { data, error } = await SupabaseService.signIn(email, password);
 
         if (error) {
-          throw error;
+          console.error('Login error:', error);
+          
+          // Provide more specific error messages
+          if (error.message.includes('Invalid login credentials')) {
+            // Check if user exists in auth but not in champions table
+            const { data: authUsers } = await supabaseClient.auth.admin.listUsers();
+            const userExists = authUsers?.users?.some(u => u.email === email);
+            
+            if (userExists) {
+              alert('Invalid login credentials. Your account exists but may not be fully set up. Please contact support or try registering again.');
+            } else {
+              alert('Invalid login credentials. Please check your email and password, or register a new account.');
+            }
+          } else {
+            alert(error.message || 'Login failed. Please try again.');
+          }
+          
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
         }
+
+        console.log('Auth successful, fetching champion profile...');
 
         // Get champion profile
         const champion = await SupabaseService.getCurrentChampion();
         
         if (!champion) {
-          throw new Error('Champion profile not found');
+          console.error('Champion profile not found for user:', email);
+          alert('Your account exists but profile is incomplete. Please contact support.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+          return;
         }
+
+        console.log('Champion profile found:', champion.email);
 
         // Store session info in localStorage for quick access (optional)
         localStorage.setItem('current-champion-id', champion.id);
@@ -59,7 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'champion-dashboard.html';
       } catch (error) {
         console.error('Login error:', error);
-        alert(error.message || 'Invalid email or password');
+        
+        // Better error handling
+        let errorMessage = 'Invalid email or password';
+        
+        if (error.message) {
+          if (error.message.includes('Invalid login credentials') || 
+              error.message.includes('Email not confirmed')) {
+            errorMessage = 'Invalid email or password. Please check your credentials.';
+          } else if (error.message.includes('profile')) {
+            errorMessage = 'Your account exists but profile is incomplete. Please contact support.';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        alert(errorMessage);
         
         // Reset button
         const submitBtn = loginForm.querySelector('button[type="submit"]');
