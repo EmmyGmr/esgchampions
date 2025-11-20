@@ -1,228 +1,313 @@
 // Ranking Page with Supabase Integration
-// This updates the ranking page to display accepted reviews
+// Displays community rankings with peer reviews, indicators, and credits
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Load accepted reviews from Supabase
-  const acceptedReviews = await AdminService.getAcceptedReviews();
+  try {
+    // Calculate date 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Calculate date 7 days ago (for weekly leaderboard)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  // Group reviews by panel category
-  const reviewsByCategory = {
-    environmental: [],
-    social: [],
-    governance: [],
-    all: acceptedReviews
-  };
+    // Get all champions with their activity
+    const [championsResult, reviewsResult, votesResult, commentsResult, invitationsResult] = await Promise.all([
+      supabaseClient
+        .from('champions')
+        .select('id, first_name, last_name, email, organization'),
+      supabaseClient
+        .from('reviews')
+        .select('id, champion_id, indicator_id, created_at, status')
+        .gte('created_at', thirtyDaysAgo.toISOString()),
+      supabaseClient
+        .from('votes')
+        .select('id, champion_id, indicator_id, created_at')
+        .gte('created_at', thirtyDaysAgo.toISOString()),
+      supabaseClient
+        .from('comments')
+        .select('id, champion_id, indicator_id, created_at')
+        .gte('created_at', thirtyDaysAgo.toISOString()),
+      supabaseClient
+        .from('invitations')
+        .select('id, from_champion_id, to_email, created_at')
+        .gte('created_at', thirtyDaysAgo.toISOString())
+    ]);
 
-  acceptedReviews.forEach(review => {
-    const panel = review.panels;
-    if (panel && panel.category) {
-      if (reviewsByCategory[panel.category]) {
-        reviewsByCategory[panel.category].push(review);
-      }
-    }
-  });
+    const champions = championsResult.data || [];
+    const reviews = reviewsResult.data || [];
+    const votes = votesResult.data || [];
+    const comments = commentsResult.data || [];
+    const invitations = invitationsResult.data || [];
 
-  // Calculate rankings based on accepted reviews
-  // Group by champion and calculate scores
-  const championScores = {};
+    // Get weekly data
+    const weeklyReviews = reviews.filter(r => new Date(r.created_at) >= sevenDaysAgo);
+    const weeklyVotes = votes.filter(v => new Date(v.created_at) >= sevenDaysAgo);
+    const weeklyComments = comments.filter(c => new Date(c.created_at) >= sevenDaysAgo);
+    const weeklyInvitations = invitations.filter(i => new Date(i.created_at) >= sevenDaysAgo);
 
-  acceptedReviews.forEach(review => {
-    const champion = review.champions;
-    if (!champion) return;
+    // Calculate stats for each champion
+    const championStats = {};
 
-    const championId = champion.id;
-    if (!championScores[championId]) {
-      championScores[championId] = {
-        champion: champion,
-        totalScore: 0,
-        reviewCount: 0,
-        environmental: { score: 0, count: 0 },
-        social: { score: 0, count: 0 },
-        governance: { score: 0, count: 0 }
+    champions.forEach(champion => {
+      const championId = champion.id;
+      
+      // Get unique indicators reviewed
+      const reviewedIndicators = new Set(
+        reviews
+          .filter(r => r.champion_id === championId)
+          .map(r => r.indicator_id)
+      );
+
+      // Count peer reviews (invitations sent by this champion that resulted in reviews)
+      const sentInvitations = invitations.filter(i => i.from_champion_id === championId);
+      const peerReviewCount = sentInvitations.length; // Simplified: count invitations as peer reviews
+
+      // Calculate credits (22 credits per complete review)
+      const acceptedReviews = reviews.filter(r => 
+        r.champion_id === championId && r.status === 'accepted'
+      ).length;
+      const credits = acceptedReviews * 22;
+
+      championStats[championId] = {
+        champion,
+        peerReviews: peerReviewCount,
+        indicators: reviewedIndicators.size,
+        credits,
+        // For sorting
+        totalActivity: reviewedIndicators.size + peerReviewCount
       };
-    }
+    });
 
-    const panel = review.panels;
-    const rating = review.rating || 0;
-    const necessary = review.necessary === 'yes' ? 1 : 0;
+    // Convert to array and sort by credits (primary) and indicators (secondary)
+    const championsRanked = Object.values(championStats)
+      .sort((a, b) => {
+        if (b.credits !== a.credits) return b.credits - a.credits;
+        return b.indicators - a.indicators;
+      })
+      .map((stat, index) => ({
+        rank: index + 1,
+        name: `${stat.champion.first_name} ${stat.champion.last_name}`,
+        peerReviews: stat.peerReviews,
+        indicators: stat.indicators,
+        credits: stat.credits,
+        champion: stat.champion
+      }));
 
-    // Calculate score: rating (0-5) * 20 + necessary bonus (20 points)
-    const reviewScore = (rating * 20) + (necessary * 20);
+    // Calculate weekly rankings
+    const weeklyChampionStats = {};
+    champions.forEach(champion => {
+      const championId = champion.id;
+      const weeklyReviewedIndicators = new Set(
+        weeklyReviews
+          .filter(r => r.champion_id === championId)
+          .map(r => r.indicator_id)
+      );
+      const weeklySentInvitations = weeklyInvitations.filter(i => i.from_champion_id === championId);
+      const weeklyAcceptedReviews = weeklyReviews.filter(r => 
+        r.champion_id === championId && r.status === 'accepted'
+      ).length;
+      const weeklyCredits = weeklyAcceptedReviews * 22;
 
-    championScores[championId].totalScore += reviewScore;
-    championScores[championId].reviewCount += 1;
+      weeklyChampionStats[championId] = {
+        champion,
+        peerReviews: weeklySentInvitations.length,
+        indicators: weeklyReviewedIndicators.size,
+        credits: weeklyCredits
+      };
+    });
 
-    if (panel && panel.category) {
-      if (championScores[championId][panel.category]) {
-        championScores[championId][panel.category].score += reviewScore;
-        championScores[championId][panel.category].count += 1;
+    const weeklyRanked = Object.values(weeklyChampionStats)
+      .sort((a, b) => {
+        if (b.credits !== a.credits) return b.credits - a.credits;
+        return b.indicators - a.indicators;
+      })
+      .map((stat, index) => ({
+        rank: index + 1,
+        name: `${stat.champion.first_name} ${stat.champion.last_name}`,
+        peerReviews: stat.peerReviews,
+        indicators: stat.indicators,
+        credits: stat.credits
+      }));
+
+    // ============================================
+    // RENDER TOP 3 CHAMPIONS
+    // ============================================
+    function renderTopChampions() {
+      const container = document.getElementById('top-champions-container');
+      if (!container) return;
+
+      const top3 = championsRanked.slice(0, 3);
+      
+      if (top3.length === 0) {
+        container.innerHTML = '<p class="text-gray">No champions yet. Be the first!</p>';
+        return;
       }
-    }
-  });
 
-  // Convert to array and calculate averages
-  const championsRanked = Object.values(championScores).map(champ => {
-    const avgScore = champ.reviewCount > 0 
-      ? Math.round(champ.totalScore / champ.reviewCount)
-      : 0;
-    
-    const eAvg = champ.environmental.count > 0
-      ? Math.round(champ.environmental.score / champ.environmental.count)
-      : 0;
-    
-    const sAvg = champ.social.count > 0
-      ? Math.round(champ.social.score / champ.social.count)
-      : 0;
-    
-    const gAvg = champ.governance.count > 0
-      ? Math.round(champ.governance.score / champ.governance.count)
-      : 0;
+      container.innerHTML = top3.map((champ, index) => {
+        // Generate avatar initials
+        const initials = champ.name
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
 
-    return {
-      name: champ.champion.organization || `${champ.champion.first_name} ${champ.champion.last_name}`,
-      sector: champ.champion.organization || 'N/A',
-      score: avgScore,
-      e: eAvg,
-      s: sAvg,
-      g: gAvg,
-      reviewCount: champ.reviewCount
-    };
-  }).sort((a, b) => b.score - a.score);
-
-  // Update champions data
-  const championsData = {
-    all: championsRanked,
-    environmental: championsRanked.filter(c => c.e > 0),
-    social: championsRanked.filter(c => c.s > 0),
-    governance: championsRanked.filter(c => c.g > 0)
-  };
-
-  // Update top 3 podium if we have champions
-  if (championsRanked.length > 0) {
-    const top3 = championsRanked.slice(0, 3);
-    const podiumContainer = document.querySelector('.grid.grid-cols-3.gap-8.mb-16');
-    
-    if (podiumContainer && top3.length > 0) {
-      const medals = ['🥇', '🥈', '🥉'];
-      podiumContainer.innerHTML = top3.map((champ, index) => {
-        const order = index === 0 ? 2 : index === 1 ? 1 : 3;
         return `
-          <div class="card text-center" style="order: ${order}; ${index === 0 ? 'transform: scale(1.1);' : ''}">
-            <div style="font-size: ${index === 0 ? '2.5rem' : '2rem'}; margin-bottom: 1rem;">${medals[index]}</div>
-            <h3 style="margin-bottom: 0.5rem;">${champ.name}</h3>
-            <p class="text-gray mb-4" style="font-size: 0.875rem;">${champ.sector}</p>
-            <div style="font-size: ${index === 0 ? '3rem' : '2.5rem'}; font-weight: 700; color: #0D4D6C; margin-bottom: 0.5rem;">${champ.score}</div>
-            <span class="text-gray" style="font-size: 0.875rem;">Overall Score</span>
+          <div style="text-align: center;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #0D4D6C 0%, #4A9FD8 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; margin: 0 auto 1rem;">
+              ${initials}
+            </div>
+            <h4 style="margin-bottom: 0.25rem; font-size: 1rem;">${champ.name}</h4>
+            <p class="text-gray" style="font-size: 0.875rem;">${champ.credits} Credits</p>
           </div>
         `;
       }).join('');
     }
-  }
 
-  // Update stats
-  const statsContainer = document.querySelector('.grid.grid-cols-3.gap-8');
-  if (statsContainer) {
-    const totalChampions = championsRanked.length;
-    const avgImprovement = championsRanked.length > 0 
-      ? Math.round(championsRanked.reduce((sum, c) => sum + c.score, 0) / championsRanked.length)
-      : 0;
-    const industries = new Set(championsRanked.map(c => c.sector)).size;
+    // ============================================
+    // RENDER LEADERBOARD TABLE
+    // ============================================
+    function renderLeaderboard(data, tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
 
-    statsContainer.innerHTML = `
-      <div class="card text-center">
-        <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">${totalChampions}+</div>
-        <p class="text-gray mb-2" style="font-weight: 600;">Total Champions</p>
-        <p class="text-gray" style="font-size: 0.875rem;">Organizations recognized globally</p>
-      </div>
-      <div class="card text-center">
-        <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">${avgImprovement}%</div>
-        <p class="text-gray mb-2" style="font-weight: 600;">Average ESG Score</p>
-        <p class="text-gray" style="font-size: 0.875rem;">Based on accepted reviews</p>
-      </div>
-      <div class="card text-center">
-        <div class="text-primary mb-2" style="font-size: 2.5rem; font-weight: 700;">${industries}</div>
-        <p class="text-gray mb-2" style="font-weight: 600;">Industries Covered</p>
-        <p class="text-gray" style="font-size: 0.875rem;">Across all major sectors</p>
-      </div>
-    `;
-  }
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #6b7280;">No data available</td></tr>';
+        return;
+      }
 
-  // Render champions function (from original ranking.html)
-  function renderChampions(category) {
-    const champions = championsData[category] || championsData.all;
-    const gridId = `champions-grid-${category}`;
-    const grid = document.getElementById(gridId);
-    
-    if (!grid) return;
-
-    if (champions.length === 0) {
-      grid.innerHTML = `
-        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
-          <p class="text-gray">No champions found in this category yet.</p>
-        </div>
-      `;
-      return;
+      tbody.innerHTML = data.map(champ => {
+        return `
+          <tr style="border-bottom: 1px solid #e5e7eb;">
+            <td style="padding: 1rem; font-weight: 600; color: #0D4D6C;">${champ.rank}</td>
+            <td style="padding: 1rem;">${champ.name}</td>
+            <td style="padding: 1rem;">${champ.peerReviews}</td>
+            <td style="padding: 1rem;">${champ.indicators}</td>
+            <td style="padding: 1rem; font-weight: 600; color: #0D4D6C;">${champ.credits.toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    grid.innerHTML = champions.map((champion, index) => `
-      <div class="card">
-        <div class="flex justify-between items-center mb-4">
-          <div style="font-size: 1.5rem; font-weight: 700; color: #0D4D6C;">#${index + 1}</div>
-          <div style="font-size: 2rem; font-weight: 700; color: #0D4D6C;">${champion.score}</div>
-        </div>
-        <h3 style="margin-bottom: 0.5rem;">${champion.name}</h3>
-        <p class="text-gray mb-4" style="font-size: 0.875rem;">${champion.sector}</p>
-        <div style="padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-          <div class="flex justify-between mb-2" style="font-size: 0.875rem;">
-            <span class="text-gray">Environmental:</span>
-            <span style="font-weight: 600;">${champion.e}</span>
-          </div>
-          <div class="flex justify-between mb-2" style="font-size: 0.875rem;">
-            <span class="text-gray">Social:</span>
-            <span style="font-weight: 600;">${champion.s}</span>
-          </div>
-          <div class="flex justify-between" style="font-size: 0.875rem;">
-            <span class="text-gray">Governance:</span>
-            <span style="font-weight: 600;">${champion.g}</span>
-          </div>
-        </div>
-        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #e5e7eb;">
-          <p class="text-gray" style="font-size: 0.75rem;">${champion.reviewCount} review${champion.reviewCount !== 1 ? 's' : ''}</p>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  // Initial render
-  renderChampions('all');
-  renderChampions('environmental');
-  renderChampions('social');
-  renderChampions('governance');
-
-  // Tab functionality (from original ranking.html)
-  const tabButtons = document.querySelectorAll('.tab-btn');
-  const tabContents = document.querySelectorAll('.tab-content');
-
-  tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      
-      // Update active button
-      tabButtons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      
-      // Update active content
-      tabContents.forEach(content => {
-        content.classList.remove('active');
-        content.style.display = 'none';
+    // ============================================
+    // TABLE SORTING
+    // ============================================
+    let currentSort = { column: 'rank', direction: 'asc' };
+    const sortableHeaders = document.querySelectorAll('#leaderboard-table th[data-sort]');
+    
+    sortableHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = header.dataset.sort;
+        const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
+        currentSort = { column, direction };
+        
+        // Sort data
+        const sorted = [...championsRanked].sort((a, b) => {
+          let aVal, bVal;
+          
+          switch(column) {
+            case 'rank':
+              aVal = a.rank;
+              bVal = b.rank;
+              break;
+            case 'name':
+              aVal = a.name.toLowerCase();
+              bVal = b.name.toLowerCase();
+              break;
+            case 'peer-reviews':
+              aVal = a.peerReviews;
+              bVal = b.peerReviews;
+              break;
+            case 'indicators':
+              aVal = a.indicators;
+              bVal = b.indicators;
+              break;
+            case 'credits':
+              aVal = a.credits;
+              bVal = b.credits;
+              break;
+            default:
+              return 0;
+          }
+          
+          if (direction === 'asc') {
+            return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+          } else {
+            return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+          }
+        });
+        
+        renderLeaderboard(sorted, 'leaderboard-tbody');
+        
+        // Update header indicators
+        sortableHeaders.forEach(h => {
+          h.style.color = '';
+          if (h === header) {
+            h.style.color = '#0D4D6C';
+            h.textContent = h.textContent.replace(' ↑', '').replace(' ↓', '');
+            h.textContent += direction === 'asc' ? ' ↑' : ' ↓';
+          }
+        });
       });
-      
-      const activeContent = document.getElementById(`tab-${tab}`);
-      if (activeContent) {
-        activeContent.classList.add('active');
-        activeContent.style.display = 'block';
-      }
     });
-  });
-});
 
+    // ============================================
+    // SCORING MODAL
+    // ============================================
+    const scoringBtn = document.getElementById('scoring-calculated-btn');
+    const scoringModal = document.getElementById('scoring-modal');
+    const closeScoringModal = document.getElementById('close-scoring-modal');
+
+    if (scoringBtn && scoringModal) {
+      scoringBtn.addEventListener('click', () => {
+        scoringModal.classList.remove('hidden');
+      });
+    }
+
+    if (closeScoringModal) {
+      closeScoringModal.addEventListener('click', () => {
+        scoringModal.classList.add('hidden');
+      });
+    }
+
+    if (scoringModal) {
+      scoringModal.addEventListener('click', (e) => {
+        if (e.target === scoringModal) {
+          scoringModal.classList.add('hidden');
+        }
+      });
+    }
+
+    // ============================================
+    // VIEW FULL LEADERBOARD BUTTON
+    // ============================================
+    const viewFullBtn = document.getElementById('view-full-leaderboard-btn');
+    if (viewFullBtn) {
+      viewFullBtn.addEventListener('click', () => {
+        document.getElementById('leaderboard-table').scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+
+    // ============================================
+    // CALCULATE TOTAL CREDITS
+    // ============================================
+    const totalCredits = championsRanked.reduce((sum, champ) => sum + champ.credits, 0);
+    const totalCreditsEl = document.getElementById('total-credits-summary');
+    if (totalCreditsEl) {
+      totalCreditsEl.textContent = `${totalCredits.toLocaleString()} Credits`;
+    }
+
+    // Render all components
+    renderTopChampions();
+    renderLeaderboard(championsRanked, 'leaderboard-tbody');
+    renderLeaderboard(weeklyRanked, 'weekly-leaderboard-tbody');
+
+  } catch (error) {
+    console.error('Error loading rankings:', error);
+    const tbody = document.getElementById('leaderboard-tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding: 2rem; text-align: center; color: #ef4444;">Error loading rankings. Please refresh the page.</td></tr>';
+    }
+  }
+});
