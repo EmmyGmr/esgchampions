@@ -375,10 +375,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       await Promise.all(savePromises);
       
       // Show success popup
-      showSubmissionSuccess();
-      
-      // Redirect to panels page
-      window.location.href = 'champion-panels.html';
+      const successModal = document.getElementById('submission-success-modal');
+      if (successModal) {
+        successModal.classList.remove('hidden');
+        
+        // Handle return to dashboard button
+        const returnBtn = document.getElementById('return-to-dashboard-btn');
+        if (returnBtn) {
+          returnBtn.onclick = () => {
+            window.location.href = 'champion-dashboard.html';
+          };
+        }
+      } else {
+        // Fallback: redirect after a short delay
+        alert('Reviews submitted successfully!');
+        window.location.href = 'champion-panels.html';
+      }
     } catch (error) {
       console.error('Error saving reviews:', error);
       alert('Error submitting reviews. Please try again.');

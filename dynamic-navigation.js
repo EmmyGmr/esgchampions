@@ -106,7 +106,9 @@ async function updateNavigation() {
 
   // Get or create navigation buttons
   let membershipBtn = document.getElementById('membership-btn');
-  let dashboardBtn = document.getElementById('dashboard-btn');
+  // Check for existing Dashboard button by ID or href
+  let dashboardBtn = document.getElementById('dashboard-btn') || 
+                     nav.querySelector('a[href="champion-dashboard.html"]');
   let adminBtn = document.getElementById('admin-btn');
   let rankingsBtn = document.getElementById('nav-rankings-btn') || 
                     nav.querySelector('a[href="ranking.html"]');
@@ -143,7 +145,25 @@ async function updateNavigation() {
         nav.appendChild(dashboardBtn);
       }
     } else {
+      // Ensure existing Dashboard button has correct ID and is visible
+      if (!dashboardBtn.id) {
+        dashboardBtn.id = 'dashboard-btn';
+      }
       dashboardBtn.style.display = '';
+      dashboardBtn.href = 'champion-dashboard.html';
+      dashboardBtn.className = 'btn-primary';
+      dashboardBtn.textContent = 'Dashboard';
+    }
+    
+    // Remove any duplicate Dashboard buttons
+    const allDashboardLinks = nav.querySelectorAll('a[href="champion-dashboard.html"]');
+    if (allDashboardLinks.length > 1) {
+      // Keep the first one (which should be dashboardBtn), remove others
+      allDashboardLinks.forEach((link, index) => {
+        if (index > 0 && link !== dashboardBtn) {
+          link.remove();
+        }
+      });
     }
   } else {
     // User is NOT logged in: Show Membership, Hide Dashboard

@@ -120,7 +120,21 @@ document.addEventListener('DOMContentLoaded', async () => {
           .eq('id', currentChampion.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        // Handle column not existing error gracefully
+        if (error) {
+          if (error.code === '42703') {
+            // Column doesn't exist - user needs to run SQL script
+            console.warn('Progress tracking columns not found. Run add-user-progress-tracking.sql in Supabase.');
+            const continueBtn = document.getElementById('continue-where-left-off-btn');
+            if (continueBtn) {
+              continueBtn.onclick = () => {
+                window.location.href = 'champion-panels.html';
+              };
+            }
+            return;
+          }
+          if (error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+        }
 
         const lastPanelId = championData?.last_active_panel_id;
         const lastIndicatorId = championData?.last_active_indicator_id;

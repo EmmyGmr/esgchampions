@@ -464,6 +464,32 @@
     </div>
   </footer>
 
+  <!-- Indicator Selection Modal -->
+  <div id="indicator-selection-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 48rem;">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="selection-modal-title">Select Indicators to Review</h2>
+        <button id="close-selection-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="mb-4">
+        <div class="flex justify-between items-center mb-4">
+          <p class="text-gray">Choose the indicators you want to validate for this panel.</p>
+          <div class="flex gap-2">
+            <button id="select-all-indicators" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Select All</button>
+            <button id="deselect-all-indicators" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Deselect All</button>
+          </div>
+        </div>
+        <div id="indicators-selection-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 1rem;">
+          <!-- Indicators checkboxes will be loaded here -->
+        </div>
+      </div>
+      <div class="flex gap-4">
+        <button id="proceed-review-btn" class="btn-primary" style="flex: 1; padding: 0.75rem;">Proceed to Review</button>
+        <button id="cancel-selection-btn" class="btn-secondary" style="padding: 0.75rem 1.5rem;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scoring Calculation Modal -->
   <div id="scoring-modal" class="modal hidden">
     <div class="modal-content" style="max-width: 600px;">
