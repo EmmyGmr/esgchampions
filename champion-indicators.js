@@ -72,16 +72,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Filter to only show selected indicators
         if (Array.isArray(selectedIndicatorIds) && selectedIndicatorIds.length > 0) {
+          // Convert all IDs to strings for comparison (in case of type mismatch)
+          const selectedIdsAsStrings = selectedIndicatorIds.map(id => String(id));
           const beforeFilter = allIndicators.length;
+          
           allIndicators = allIndicators.filter(ind => {
-            const isSelected = selectedIndicatorIds.includes(ind.id);
+            const indicatorId = String(ind.id);
+            const isSelected = selectedIdsAsStrings.includes(indicatorId);
             if (!isSelected) {
-              console.log(`Indicator ${ind.id} (${ind.title}) not in selected list`);
+              console.log(`Indicator ${indicatorId} (${ind.title}) not in selected list`);
             }
             return isSelected;
           });
+          
           console.log(`Filtered from ${beforeFilter} to ${allIndicators.length} indicators`);
           console.log('Filtered indicator IDs:', allIndicators.map(ind => ind.id));
+          
+          if (allIndicators.length === 0) {
+            console.warn('No indicators matched after filtering! This might indicate an ID mismatch.');
+            console.warn('Selected IDs:', selectedIdsAsStrings);
+            console.warn('Available indicator IDs:', allIndicators.map(ind => String(ind.id)));
+          }
           
           // Only clear localStorage after successful filtering
           localStorage.removeItem('selected-indicators');
