@@ -314,20 +314,6 @@ const SupabaseService = {
       return [];
     }
   },
-    try {
-      const { data, error } = await supabaseClient
-        .from('indicators')
-        .select('*')
-        .eq('panel_id', panelId)
-        .order('id');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Get indicators error:', error);
-      return [];
-    }
-  },
 
   /**
    * Get indicator by ID
