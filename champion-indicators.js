@@ -305,24 +305,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Save all reviews
-    reviewsToSubmit.forEach(reviewData => {
-      saveReview(currentChampion.id, reviewData.indicatorId, {
-        necessary: reviewData.necessary,
-        rating: reviewData.rating,
-        comments: reviewData.comments
+    // Save all reviews to Supabase with pending status
+    try {
+      const savePromises = reviewsToSubmit.map(async (reviewData) => {
+        // Save review to Supabase with pending status
+        await SupabaseService.saveReview(currentChampion.id, reviewData.indicatorId, {
+          necessary: reviewData.necessary,
+          rating: reviewData.rating,
+          comments: reviewData.comments,
+          status: 'pending' // All new reviews start as pending
+        });
+
+        // Also save as comment for backward compatibility
+        if (reviewData.comments) {
+          await DB.saveComment(currentChampion.id, reviewData.indicatorId, reviewData.comments);
+        }
       });
 
-      // Also save as comment for backward compatibility
-      if (reviewData.comments) {
-        DB.saveComment(currentChampion.id, reviewData.indicatorId, reviewData.comments);
-      }
-    });
-
-    alert(`Successfully submitted ${reviewsToSubmit.length} review${reviewsToSubmit.length !== 1 ? 's' : ''}!`);
-    
-    // Redirect to panels page
-    window.location.href = 'champion-panels.html';
+      await Promise.all(savePromises);
+      
+      alert(`Successfully submitted ${reviewsToSubmit.length} review${reviewsToSubmit.length !== 1 ? 's' : ''}!\n\nYour reviews are now pending admin approval.`);
+      
+      // Redirect to panels page
+      window.location.href = 'champion-panels.html';
+    } catch (error) {
+      console.error('Error saving reviews:', error);
+      alert('Error submitting reviews. Please try again.');
+    }
   }
 
     // Initial render

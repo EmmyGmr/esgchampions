@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let allReviews = [];
   let currentFilters = {
-    status: 'all',
+    status: 'pending', // Default to pending reviews queue
     panelCategory: 'all',
     search: ''
   };
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><p>Loading reviews...</p></div>';
 
       allReviews = await AdminService.getAllReviews(currentFilters);
-      renderReviews(allReviews);
+      await renderReviews(allReviews);
       updateStats();
     } catch (error) {
       console.error('Load reviews error:', error);
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Render reviews
-  function renderReviews(reviews) {
+  async function renderReviews(reviews) {
     const container = document.getElementById('reviews-container');
 
     if (reviews.length === 0) {
@@ -61,7 +61,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    container.innerHTML = reviews.map(review => {
+    // Fetch votes and comments for each review's indicator
+    const reviewsWithActivity = await Promise.all(reviews.map(async (review) => {
+      if (!review.indicators || !review.indicators.id) return review;
+      
+      const [votesResult, commentsResult] = await Promise.all([
+        supabaseClient
+          .from('votes')
+          .select('id, vote, created_at, champions:champion_id(first_name, last_name)')
+          .eq('indicator_id', review.indicators.id),
+        supabaseClient
+          .from('comments')
+          .select('id, comment, created_at, champions:champion_id(first_name, last_name)')
+          .eq('indicator_id', review.indicators.id)
+          .order('created_at', { ascending: false })
+          .limit(5) // Show last 5 comments
+      ]);
+
+      return {
+        ...review,
+        votes: votesResult.data || [],
+        comments: commentsResult.data || []
+      };
+    }));
+
+    container.innerHTML = reviewsWithActivity.map(review => {
       const champion = review.champions;
       const indicator = review.indicators;
       const panel = review.panel;
@@ -131,10 +155,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           ${review.comments ? `
             <div style="margin-top: 1rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.375rem;">
-              <span class="meta-label" style="margin-bottom: 0.5rem; display: block;">Comments</span>
+              <span class="meta-label" style="margin-bottom: 0.5rem; display: block;">Review Comments</span>
               <p style="color: #374151; line-height: 1.6;">${review.comments}</p>
             </div>
           ` : ''}
+
+          <!-- Votes and Comments Activity -->
+          <div style="margin-top: 1rem; padding: 1rem; background-color: #f0f9ff; border-radius: 0.375rem; border: 1px solid #bae6fd;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div>
+                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Votes: ${review.votes?.length || 0}</span>
+                ${review.votes && review.votes.length > 0 ? `
+                  <div style="font-size: 0.875rem;">
+                    ${review.votes.slice(0, 3).map(v => {
+                      const voteIcon = v.vote === 'up' ? '👍' : v.vote === 'down' ? '👎' : '➖';
+                      const voterName = v.champions ? `${v.champions.first_name} ${v.champions.last_name}` : 'Anonymous';
+                      return `<div style="margin-bottom: 0.25rem;">${voteIcon} ${voterName}</div>`;
+                    }).join('')}
+                    ${review.votes.length > 3 ? `<div style="color: #6b7280; font-size: 0.75rem;">+${review.votes.length - 3} more</div>` : ''}
+                  </div>
+                ` : '<div style="color: #6b7280; font-size: 0.875rem;">No votes yet</div>'}
+              </div>
+              <div>
+                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Comments: ${review.comments?.length || 0}</span>
+                ${review.comments && review.comments.length > 0 ? `
+                  <div style="font-size: 0.875rem; max-height: 100px; overflow-y: auto;">
+                    ${review.comments.map(c => {
+                      const commenterName = c.champions ? `${c.champions.first_name} ${c.champions.last_name}` : 'Anonymous';
+                      return `<div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb;">
+                        <div style="font-weight: 500; margin-bottom: 0.25rem;">${commenterName}</div>
+                        <div style="color: #374151; font-size: 0.8125rem;">${c.comment.substring(0, 100)}${c.comment.length > 100 ? '...' : ''}</div>
+                      </div>`;
+                    }).join('')}
+                  </div>
+                ` : '<div style="color: #6b7280; font-size: 0.875rem;">No comments yet</div>'}
+              </div>
+            </div>
+          </div>
 
           ${review.status === 'pending' ? `
             <div class="review-actions">
