@@ -231,7 +231,7 @@
           <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 1rem;">out of 100</div>
           <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 1rem;">Reward + Impact</div>
           <button class="btn-primary" style="width: 100%; background: white; color: #0D4D6C; border: none;" id="continue-where-left-off-btn">
-            Continue where you left off
+            <span id="continue-btn-text">Continue where you left off</span>
           </button>
         </div>
 
@@ -293,9 +293,12 @@
 
         <!-- Right Column: Activity & Rewards -->
         <div>
-          <div class="activity-rewards-tabs">
-            <button class="activity-rewards-tab active" data-tab="activity">Activity</button>
-            <button class="activity-rewards-tab" data-tab="rewards">Rewards</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div class="activity-rewards-tabs" style="flex: 1;">
+              <button class="activity-rewards-tab active" data-tab="activity">Activity</button>
+              <button class="activity-rewards-tab" data-tab="rewards">Rewards</button>
+            </div>
+            <a href="champion-panels.html" class="btn-secondary" style="margin-left: 1rem; white-space: nowrap; padding: 0.5rem 1rem; font-size: 0.875rem;">Browse All Panels</a>
           </div>
 
           <!-- Activity Tab -->

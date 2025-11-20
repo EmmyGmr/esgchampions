@@ -108,13 +108,79 @@ document.addEventListener('DOMContentLoaded', async () => {
       improvementEl.textContent = improvement >= 0 ? `+${improvement}` : `${improvement}`;
     }
 
-    // Continue where left off button
-    const continueBtn = document.getElementById('continue-where-left-off-btn');
-    if (continueBtn) {
-      continueBtn.addEventListener('click', () => {
-        window.location.href = 'champion-panels.html';
-      });
+    // ============================================
+    // CONTINUE WHERE YOU LEFT OFF
+    // ============================================
+    async function loadLastActivity() {
+      try {
+        // Get last active panel and indicator from database
+        const { data: championData, error } = await supabaseClient
+          .from('champions')
+          .select('last_active_panel_id, last_active_indicator_id, last_activity_at')
+          .eq('id', currentChampion.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+
+        const lastPanelId = championData?.last_active_panel_id;
+        const lastIndicatorId = championData?.last_active_indicator_id;
+        const lastActivityAt = championData?.last_activity_at;
+
+        const continueBtn = document.getElementById('continue-where-left-off-btn');
+        const continueBtnText = document.getElementById('continue-btn-text');
+        
+        if (continueBtn && lastPanelId) {
+          // Load panel and indicator info
+          const [panel, indicator] = await Promise.all([
+            lastPanelId ? DB.getPanel(lastPanelId) : null,
+            lastIndicatorId ? DB.getIndicator(lastIndicatorId) : null
+          ]);
+
+          if (panel) {
+            // Update button text
+            if (continueBtnText) {
+              const panelName = panel.title || 'Panel';
+              const indicatorName = indicator ? ` - ${indicator.title}` : '';
+              continueBtnText.textContent = `Continue: ${panelName}${indicatorName}`;
+            }
+
+            // Update button click handler
+            continueBtn.onclick = () => {
+              if (lastIndicatorId) {
+                // Go directly to the specific indicator
+                window.location.href = `champion-indicators.html?panel=${lastPanelId}&indicator=${lastIndicatorId}`;
+              } else {
+                // Go to panel indicators page
+                window.location.href = `champion-indicators.html?panel=${lastPanelId}`;
+              }
+            };
+          } else {
+            // No last activity, default behavior
+            if (continueBtnText) {
+              continueBtnText.textContent = 'Continue where you left off';
+            }
+            continueBtn.onclick = () => {
+              window.location.href = 'champion-panels.html';
+            };
+          }
+        } else if (continueBtn) {
+          // No last activity, default behavior
+          continueBtn.onclick = () => {
+            window.location.href = 'champion-panels.html';
+          };
+        }
+      } catch (error) {
+        console.error('Error loading last activity:', error);
+        const continueBtn = document.getElementById('continue-where-left-off-btn');
+        if (continueBtn) {
+          continueBtn.onclick = () => {
+            window.location.href = 'champion-panels.html';
+          };
+        }
+      }
     }
+
+    await loadLastActivity();
 
     // ============================================
     // CALCULATE MISSION PROGRESS
@@ -304,8 +370,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                   ${points > 0 ? `<span style="font-size: 0.875rem; color: #0D4D6C; font-weight: 600;">+${points} pts</span>` : ''}
                 </div>
               </div>
-              <button class="btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" onclick="window.location.href='champion-indicators.html?panel=${panel.id}'">
-                ${panel.status === 'Completed' ? 'View details' : 'Review Indicators'}
+              <button class="btn-primary panel-select-btn" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" data-panel-id="${panel.id}">
+                ${panel.status === 'Completed' ? 'View details' : 'Select Indicators'}
               </button>
             </div>
           `;
