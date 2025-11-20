@@ -256,74 +256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     attachEventListeners();
   }
 
-  // Store draft data
-  let reviewDrafts = {};
-
-  async function loadReviewDrafts() {
-    try {
-      // Load drafts for all indicators in current panel
-      const draftPromises = indicators.map(async (indicator) => {
-        const draft = await SupabaseService.getReviewDraft(currentChampion.id, indicator.id);
-        if (draft) {
-          reviewDrafts[indicator.id] = draft;
-        }
-      });
-      await Promise.all(draftPromises);
-    } catch (error) {
-      console.error('Error loading review drafts:', error);
-    }
-  }
-
-  async function autoSaveDrafts() {
-    try {
-      const allForms = document.querySelectorAll('.validation-form');
-      const savePromises = [];
-
-      allForms.forEach(form => {
-        const indicatorId = form.dataset.indicatorId;
-        const necessary = form.querySelector(`input[name="necessary-${indicatorId}"]:checked`)?.value || null;
-        const rating = parseInt(form.querySelector(`input[name="rating-${indicatorId}"]`).value) || null;
-        const comments = form.querySelector(`textarea[name="comments-${indicatorId}"]`).value.trim() || null;
-
-        // Only save if there's data
-        if (necessary || rating || comments) {
-          // Calculate progress percentage
-          let progress = 0;
-          if (necessary) progress += 33;
-          if (rating) progress += 33;
-          if (comments) progress += 34;
-
-          savePromises.push(
-            SupabaseService.saveReviewDraft(currentChampion.id, panelId, indicatorId, {
-              necessary,
-              rating,
-              comments,
-              progressPercentage: progress
-            })
-          );
-        }
-      });
-
-      if (savePromises.length > 0) {
-        await Promise.all(savePromises);
-        console.log('Auto-saved', savePromises.length, 'review drafts');
-      }
-    } catch (error) {
-      console.error('Auto-save error:', error);
-    }
-  }
-
   function getExistingReview(championId, indicatorId) {
-    // First check draft data
-    if (reviewDrafts[indicatorId]) {
-      return {
-        necessary: reviewDrafts[indicatorId].necessary,
-        rating: reviewDrafts[indicatorId].rating,
-        comments: reviewDrafts[indicatorId].comments
-      };
-    }
-    
-    // Fallback to localStorage
     const reviews = JSON.parse(localStorage.getItem('esg-reviews') || '[]');
     return reviews.find(r => r.championId === championId && r.indicatorId === indicatorId);
   }
@@ -366,37 +299,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           rating.querySelectorAll('.star-btn').forEach((star, i) => {
             star.style.color = i < ratingValue ? '#fbbf24' : '#d1d5db';
           });
-          
-          // Auto-save draft
-          setTimeout(() => autoSaveDrafts(), 1000);
         });
       });
     });
 
-    // Prevent individual form submissions and add auto-save
+    // Prevent individual form submissions
     document.querySelectorAll('.validation-form').forEach(form => {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
       });
-      
-      // Auto-save on input changes
-      const indicatorId = form.dataset.indicatorId;
-      const necessaryInputs = form.querySelectorAll(`input[name="necessary-${indicatorId}"]`);
-      const commentsTextarea = form.querySelector(`textarea[name="comments-${indicatorId}"]`);
-      
-      necessaryInputs.forEach(input => {
-        input.addEventListener('change', () => {
-          setTimeout(() => autoSaveDrafts(), 1000);
-        });
-      });
-      
-      if (commentsTextarea) {
-        let debounceTimer;
-        commentsTextarea.addEventListener('input', () => {
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(() => autoSaveDrafts(), 2000);
-        });
-      }
     });
 
     // Submit all reviews button
@@ -462,12 +373,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       await Promise.all(savePromises);
-      
-      // Delete all drafts after successful submission
-      const deleteDraftPromises = reviewsToSubmit.map(reviewData => 
-        SupabaseService.deleteReviewDraft(currentChampion.id, reviewData.indicatorId)
-      );
-      await Promise.all(deleteDraftPromises);
       
       // Show success popup
       const successModal = document.getElementById('submission-success-modal');

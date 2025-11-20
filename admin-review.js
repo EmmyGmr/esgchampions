@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
 
-          ${review.comments && typeof review.comments === 'string' && review.comments.trim() ? `
+          ${review.comments ? `
             <div style="margin-top: 1rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.375rem;">
               <span class="meta-label" style="margin-bottom: 0.5rem; display: block;">Review Comments</span>
               <p style="color: #374151; line-height: 1.6;">${review.comments}</p>
@@ -177,23 +177,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ` : '<div style="color: #6b7280; font-size: 0.875rem;">No votes yet</div>'}
               </div>
               <div>
-                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Comments: ${review.review_comments && Array.isArray(review.review_comments) ? review.review_comments.length : (review.review_comments ? 1 : 0)}</span>
-                ${review.review_comments && Array.isArray(review.review_comments) && review.review_comments.length > 0 ? `
+                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Comments: ${review.comments?.length || 0}</span>
+                ${review.comments && review.comments.length > 0 ? `
                   <div style="font-size: 0.875rem; max-height: 100px; overflow-y: auto;">
-                    ${review.review_comments.map(c => {
-                      const commentText = typeof c === 'string' ? c : (c.comment || c.text || JSON.stringify(c));
-                      const commenterName = c.champions ? `${c.champions.first_name} ${c.champions.last_name}` : (typeof c === 'object' ? 'Anonymous' : '');
+                    ${review.comments.map(c => {
+                      const commenterName = c.champions ? `${c.champions.first_name} ${c.champions.last_name}` : 'Anonymous';
                       return `<div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb;">
-                        ${commenterName ? `<div style="font-weight: 500; margin-bottom: 0.25rem;">${commenterName}</div>` : ''}
-                        <div style="color: #374151; font-size: 0.8125rem;">${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}</div>
+                        <div style="font-weight: 500; margin-bottom: 0.25rem;">${commenterName}</div>
+                        <div style="color: #374151; font-size: 0.8125rem;">${c.comment.substring(0, 100)}${c.comment.length > 100 ? '...' : ''}</div>
                       </div>`;
                     }).join('')}
                   </div>
-                ` : (review.review_comments && typeof review.review_comments === 'string' ? `
-                  <div style="font-size: 0.875rem; max-height: 100px; overflow-y: auto;">
-                    <div style="color: #374151; font-size: 0.8125rem;">${review.review_comments.substring(0, 100)}${review.review_comments.length > 100 ? '...' : ''}</div>
-                  </div>
-                ` : '<div style="color: #6b7280; font-size: 0.875rem;">No comments yet</div>')}
+                ` : '<div style="color: #6b7280; font-size: 0.875rem;">No comments yet</div>'}
               </div>
             </div>
           </div>

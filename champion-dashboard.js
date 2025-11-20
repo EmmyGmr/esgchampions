@@ -143,43 +143,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         const continueBtn = document.getElementById('continue-where-left-off-btn');
         const continueBtnText = document.getElementById('continue-btn-text');
         
-        // Try to get latest draft for better resume info
-        let latestDraft = null;
-        try {
-          latestDraft = await SupabaseService.getLatestReviewDraft(currentChampion.id);
-        } catch (error) {
-          console.error('Error loading latest draft:', error);
-        }
-
-        // Use draft data if available, otherwise use last activity
-        const resumePanelId = latestDraft?.panel_id || lastPanelId;
-        const resumeIndicatorId = latestDraft?.indicator_id || lastIndicatorId;
-        const progressPercentage = latestDraft?.progress_percentage || 0;
-
-        if (continueBtn && resumePanelId) {
+        if (continueBtn && lastPanelId) {
           // Load panel and indicator info
           const [panel, indicator] = await Promise.all([
-            resumePanelId ? DB.getPanel(resumePanelId) : null,
-            resumeIndicatorId ? DB.getIndicator(resumeIndicatorId) : null
+            lastPanelId ? DB.getPanel(lastPanelId) : null,
+            lastIndicatorId ? DB.getIndicator(lastIndicatorId) : null
           ]);
 
           if (panel) {
-            // Update button text with progress
+            // Update button text
             if (continueBtnText) {
               const panelName = panel.title || 'Panel';
               const indicatorName = indicator ? ` - ${indicator.title}` : '';
-              const progressText = progressPercentage > 0 ? ` (${progressPercentage}% complete)` : '';
-              continueBtnText.textContent = `Continue: ${panelName}${indicatorName}${progressText}`;
+              continueBtnText.textContent = `Continue: ${panelName}${indicatorName}`;
             }
 
             // Update button click handler
             continueBtn.onclick = () => {
-              if (resumeIndicatorId) {
+              if (lastIndicatorId) {
                 // Go directly to the specific indicator
-                window.location.href = `champion-indicators.html?panel=${resumePanelId}&indicator=${resumeIndicatorId}`;
+                window.location.href = `champion-indicators.html?panel=${lastPanelId}&indicator=${lastIndicatorId}`;
               } else {
                 // Go to panel indicators page
-                window.location.href = `champion-indicators.html?panel=${resumePanelId}`;
+                window.location.href = `champion-indicators.html?panel=${lastPanelId}`;
               }
             };
           } else {
