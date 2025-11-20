@@ -132,6 +132,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       indicatorsCountEl.textContent = `${indicators.length}${selectedIndicatorIds ? ' selected' : ''} indicator${indicators.length !== 1 ? 's' : ''}`;
     }
 
+    // Store draft data (initialize before use)
+    let reviewDrafts = {};
+
+    async function loadReviewDrafts() {
+      try {
+        // Load drafts for all indicators in current panel
+        const draftPromises = indicators.map(async (indicator) => {
+          const draft = await SupabaseService.getReviewDraft(currentChampion.id, indicator.id);
+          if (draft) {
+            reviewDrafts[indicator.id] = draft;
+          }
+        });
+        await Promise.all(draftPromises);
+      } catch (error) {
+        console.error('Error loading review drafts:', error);
+      }
+    }
+
     function renderIndicators(filteredIndicators) {
       const indicatorsList = document.getElementById('indicators-list');
       
@@ -196,17 +214,17 @@ document.addEventListener('DOMContentLoaded', async () => {
               <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Is this indicator necessary?</label>
               <div class="flex gap-4">
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                  <input type="radio" name="necessary-${indicator.id}" value="yes" ${existingReview?.necessary === 'yes' ? 'checked' : ''} 
+                  <input type="radio" name="necessary-${indicator.id}" value="yes" ${reviewData?.necessary === 'yes' ? 'checked' : ''} 
                          style="margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
                   <span>Yes</span>
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                  <input type="radio" name="necessary-${indicator.id}" value="no" ${existingReview?.necessary === 'no' ? 'checked' : ''}
+                  <input type="radio" name="necessary-${indicator.id}" value="no" ${reviewData?.necessary === 'no' ? 'checked' : ''}
                          style="margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
                   <span>No</span>
                 </label>
                 <label style="display: flex; align-items: center; cursor: pointer;">
-                  <input type="radio" name="necessary-${indicator.id}" value="not-sure" ${existingReview?.necessary === 'not-sure' ? 'checked' : ''}
+                  <input type="radio" name="necessary-${indicator.id}" value="not-sure" ${reviewData?.necessary === 'not-sure' ? 'checked' : ''}
                          style="margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
                   <span>Not sure</span>
                 </label>
@@ -219,12 +237,12 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div class="star-rating" data-indicator-id="${indicator.id}" style="display: flex; gap: 0.5rem;">
                 ${[1, 2, 3, 4, 5].map(star => `
                   <button type="button" class="star-btn" data-rating="${star}" 
-                          style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: ${existingReview && existingReview.rating >= star ? '#fbbf24' : '#d1d5db'}; padding: 0;">
+                          style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: ${reviewData && reviewData.rating >= star ? '#fbbf24' : '#d1d5db'}; padding: 0;">
                     ★
                   </button>
                 `).join('')}
               </div>
-              <input type="hidden" name="rating-${indicator.id}" value="${existingReview?.rating || 0}">
+              <input type="hidden" name="rating-${indicator.id}" value="${reviewData?.rating || 0}">
             </div>
 
             <!-- Comments -->
@@ -232,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <label style="display: block; margin-bottom: 0.75rem; font-weight: 500;">Comments</label>
               <textarea name="comments-${indicator.id}" 
                         placeholder="Enter comments or references...." 
-                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 100px;">${existingReview?.comments || ''}</textarea>
+                        style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit; resize: vertical; min-height: 100px;">${reviewData?.comments || ''}</textarea>
             </div>
           </form>
         </div>
