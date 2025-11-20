@@ -9,13 +9,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Get panel ID from URL
+    // Get panel ID and indicator ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const panelId = urlParams.get('panel');
+    const indicatorId = urlParams.get('indicator');
     
     if (!panelId) {
       window.location.href = 'champion-panels.html';
       return;
+    }
+
+    // Save last activity when page loads
+    if (panelId) {
+      try {
+        await supabaseClient
+          .from('champions')
+          .update({
+            last_active_panel_id: panelId,
+            last_active_indicator_id: indicatorId || null,
+            last_activity_at: new Date().toISOString()
+          })
+          .eq('id', currentChampion.id);
+      } catch (error) {
+        console.error('Error saving last activity:', error);
+      }
     }
 
     console.log('Loading panel and indicators for panel ID:', panelId);
@@ -371,6 +388,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial render
     console.log('Rendering', indicators.length, 'indicators...');
     renderIndicators(indicators);
+
+    // Scroll to specific indicator if provided in URL
+    if (indicatorId) {
+      setTimeout(() => {
+        const indicatorElement = document.querySelector(`[data-indicator-id="${indicatorId}"]`);
+        if (indicatorElement) {
+          indicatorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the indicator briefly
+          indicatorElement.style.backgroundColor = '#fef3c7';
+          indicatorElement.style.transition = 'background-color 2s';
+          setTimeout(() => {
+            indicatorElement.style.backgroundColor = '';
+          }, 2000);
+        }
+      }, 1000);
+    }
 
   function applyFilters() {
     const searchTerm = document.getElementById('indicator-search')?.value.toLowerCase() || '';
