@@ -225,15 +225,24 @@ const SupabaseService = {
    */
   async getPanels() {
     try {
+      console.log('Fetching panels from Supabase...');
       const { data, error } = await supabaseClient
         .from('panels')
         .select('*')
         .order('id');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Get panels error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+      
+      console.log('Panels fetched successfully:', data?.length || 0, 'panels');
       return data || [];
     } catch (error) {
       console.error('Get panels error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error code:', error?.code);
       return [];
     }
   },

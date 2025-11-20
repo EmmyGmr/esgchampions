@@ -53,16 +53,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Load panels (async)
+    console.log('Fetching panels from Supabase...');
     const panels = await DB.getPanels();
     const panelsGrid = document.getElementById('panels-grid');
     let currentPanelId = null;
     
     console.log('Panels loaded:', panels);
+    console.log('Panels count:', panels?.length || 0);
+    console.log('Is array?', Array.isArray(panels));
     
     // Ensure panels is an array
     if (!Array.isArray(panels)) {
       console.error('Panels is not an array:', panels);
-      panelsGrid.innerHTML = '<p class="text-gray">Error loading panels. Please refresh the page.</p>';
+      if (panelsGrid) {
+        panelsGrid.innerHTML = '<p class="text-gray">Error loading panels. Please refresh the page.</p>';
+      }
+      return;
+    }
+    
+    if (panels.length === 0) {
+      console.warn('No panels found in database. Make sure you ran seed-panels-indicators.sql');
+      if (panelsGrid) {
+        panelsGrid.innerHTML = '<p class="text-gray">No panels found. Please run the seed script in Supabase.</p>';
+      }
       return;
     }
     
@@ -242,7 +255,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
     // Initial render
-    renderPanels(panels);
+    if (panelsGrid && panels.length > 0) {
+      console.log('Rendering', panels.length, 'panels...');
+      renderPanels(panels);
+    } else if (panelsGrid) {
+      console.warn('Panels grid element found but no panels to render');
+      panelsGrid.innerHTML = '<p class="text-gray">No panels found. Please run the seed script in Supabase.</p>';
+    } else {
+      console.error('Panels grid element not found in DOM');
+    }
 
     // Apply filters and sorting
     async function applyFiltersAndSort() {
@@ -363,7 +384,4 @@ document.addEventListener('DOMContentLoaded', async () => {
       panelsGrid.innerHTML = '<p class="text-gray">Error loading panels. Please refresh the page.</p>';
     }
   }
-});
-
-  // Logout is handled by logout.js
 });
