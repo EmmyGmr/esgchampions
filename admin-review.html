@@ -109,6 +109,80 @@
       font-size: 4rem;
       margin-bottom: 1rem;
     }
+    .admin-tab {
+      padding: 0.75rem 1.5rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.2s;
+    }
+    .admin-tab:hover {
+      color: #0D4D6C;
+      background-color: #f9fafb;
+    }
+    .admin-tab.active {
+      color: #0D4D6C;
+      border-bottom-color: #0D4D6C;
+    }
+    .admin-tab-content {
+      display: none;
+    }
+    .admin-tab-content.active {
+      display: block;
+    }
+    .panel-card, .indicator-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: box-shadow 0.2s;
+    }
+    .panel-card:hover, .indicator-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .panel-header, .indicator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .panel-actions, .indicator-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .panel-meta, .indicator-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+    .category-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+    .category-environmental {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+    .category-social {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    .category-governance {
+      background-color: #f3e8ff;
+      color: #6b21a8;
+    }
   </style>
 </head>
 <body>
@@ -141,11 +215,23 @@
 
       <!-- Page Header -->
       <div class="text-center mb-12">
-        <h1 class="mb-4">Admin Review Interface</h1>
+        <h1 class="mb-4">Admin Dashboard</h1>
         <p class="text-gray" style="font-size: 1.125rem;">
-          Review and manage indicator submissions from ESG Champions
+          Manage reviews, panels, and indicators
         </p>
       </div>
+
+      <!-- Tabs -->
+      <div class="filter-bar" style="padding: 0; border: none; background: transparent;">
+        <div style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e5e7eb;">
+          <button class="admin-tab active" data-tab="reviews">Review Submissions</button>
+          <button class="admin-tab" data-tab="panels">Panel Management</button>
+          <button class="admin-tab" data-tab="indicators">Indicator Management</button>
+        </div>
+      </div>
+
+      <!-- Reviews Tab Content -->
+      <div id="reviews-tab" class="admin-tab-content active">
 
       <!-- Stats -->
       <div class="stats-grid" id="stats-container">
@@ -200,6 +286,49 @@
         <div class="empty-state">
           <div class="empty-state-icon">⏳</div>
           <p>Loading reviews...</p>
+        </div>
+      </div>
+      </div>
+
+      <!-- Panels Tab Content -->
+      <div id="panels-tab" class="admin-tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2>ESG Panels</h2>
+          <button id="add-panel-btn" class="btn-primary">+ Add Panel</button>
+        </div>
+
+        <!-- Panels List -->
+        <div id="panels-container">
+          <div class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <p>Loading panels...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicators Tab Content -->
+      <div id="indicators-tab" class="admin-tab-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <h2>ESG Indicators</h2>
+          <button id="add-indicator-btn" class="btn-primary">+ Add Indicator</button>
+        </div>
+
+        <!-- Indicator Filters -->
+        <div class="filter-bar" style="margin-bottom: 2rem;">
+          <div class="form-group">
+            <label>Filter by Panel</label>
+            <select id="indicator-panel-filter" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem;">
+              <option value="all">All Panels</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Indicators List -->
+        <div id="indicators-container">
+          <div class="empty-state">
+            <div class="empty-state-icon">⏳</div>
+            <p>Loading indicators...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -272,7 +401,7 @@
   <script src="supabase-service.js"></script>
   <script src="admin-service.js"></script>
   <script src="admin-review.js"></script>
-  <script src="admin-service.js"></script>
+  <script src="admin-management.js"></script>
   <script src="mobile-menu.js"></script>
   <script src="dynamic-navigation.js"></script>
   <script src="logout.js"></script>

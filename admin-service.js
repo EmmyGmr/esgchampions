@@ -268,6 +268,252 @@ const AdminService = {
       console.error('Get admin actions error:', error);
       return [];
     }
+  },
+
+  // ============================================
+  // PANEL MANAGEMENT
+  // ============================================
+
+  /**
+   * Get all panels
+   */
+  async getAllPanels() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('panels')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Get panels error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new panel
+   */
+  async createPanel(panelData) {
+    try {
+      // Generate ID from title (lowercase, replace spaces with hyphens)
+      const id = panelData.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      const insertData = {
+        id: id,
+        title: panelData.title,
+        category: panelData.category,
+        description: panelData.description || null,
+        purpose: panelData.purpose || null,
+        key_indicators: null,
+        frameworks: null,
+        icon: panelData.icon || null
+      };
+
+      const { data, error } = await supabaseClient
+        .from('panels')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Create panel error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update a panel
+   */
+  async updatePanel(panelId, panelData) {
+    try {
+      const updateData = {
+        title: panelData.title,
+        category: panelData.category,
+        description: panelData.description || null,
+        purpose: panelData.purpose || null,
+        icon: panelData.icon || null,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabaseClient
+        .from('panels')
+        .update(updateData)
+        .eq('id', panelId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Update panel error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete a panel
+   */
+  async deletePanel(panelId) {
+    try {
+      // Check if panel has indicators
+      const { data: indicators, error: checkError } = await supabaseClient
+        .from('indicators')
+        .select('id')
+        .eq('panel_id', panelId)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (indicators && indicators.length > 0) {
+        throw new Error('Cannot delete panel: It has associated indicators. Please delete or reassign indicators first.');
+      }
+
+      const { error } = await supabaseClient
+        .from('panels')
+        .delete()
+        .eq('id', panelId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Delete panel error:', error);
+      throw error;
+    }
+  },
+
+  // ============================================
+  // INDICATOR MANAGEMENT
+  // ============================================
+
+  /**
+   * Get all indicators with panel information
+   */
+  async getAllIndicators(filters = {}) {
+    try {
+      let query = supabaseClient
+        .from('indicators')
+        .select(`
+          *,
+          panels:panel_id (
+            id,
+            title,
+            category
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (filters.panelId && filters.panelId !== 'all') {
+        query = query.eq('panel_id', filters.panelId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Get indicators error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Create a new indicator
+   */
+  async createIndicator(indicatorData) {
+    try {
+      // Generate ID from title (lowercase, replace spaces with hyphens)
+      const id = indicatorData.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      
+      const insertData = {
+        id: id,
+        panel_id: indicatorData.panelId,
+        title: indicatorData.title,
+        description: indicatorData.description || null,
+        unit: indicatorData.unit || null,
+        frameworks: indicatorData.frameworks || null,
+        formula_required: indicatorData.formulaRequired || false,
+        sector_context: null,
+        validation_question: null
+      };
+
+      const { data, error } = await supabaseClient
+        .from('indicators')
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Create indicator error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update an indicator
+   */
+  async updateIndicator(indicatorId, indicatorData) {
+    try {
+      const updateData = {
+        panel_id: indicatorData.panelId,
+        title: indicatorData.title,
+        description: indicatorData.description || null,
+        unit: indicatorData.unit || null,
+        frameworks: indicatorData.frameworks || null,
+        formula_required: indicatorData.formulaRequired || false,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabaseClient
+        .from('indicators')
+        .update(updateData)
+        .eq('id', indicatorId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Update indicator error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete an indicator
+   */
+  async deleteIndicator(indicatorId) {
+    try {
+      // Check if indicator has reviews or votes
+      const [reviewsResult, votesResult] = await Promise.all([
+        supabaseClient.from('reviews').select('id').eq('indicator_id', indicatorId).limit(1),
+        supabaseClient.from('votes').select('id').eq('indicator_id', indicatorId).limit(1)
+      ]);
+
+      if (reviewsResult.error) throw reviewsResult.error;
+      if (votesResult.error) throw votesResult.error;
+
+      if ((reviewsResult.data && reviewsResult.data.length > 0) || 
+          (votesResult.data && votesResult.data.length > 0)) {
+        throw new Error('Cannot delete indicator: It has associated reviews or votes.');
+      }
+
+      const { error } = await supabaseClient
+        .from('indicators')
+        .delete()
+        .eq('id', indicatorId);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Delete indicator error:', error);
+      throw error;
+    }
   }
 };
 
