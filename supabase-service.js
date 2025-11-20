@@ -293,6 +293,28 @@ const SupabaseService = {
    */
   async getIndicators(panelId) {
     try {
+      console.log('Fetching indicators for panel:', panelId);
+      const { data, error } = await supabaseClient
+        .from('indicators')
+        .select('*')
+        .eq('panel_id', panelId)
+        .order('id');
+
+      if (error) {
+        console.error('Get indicators error:', error);
+        throw error;
+      }
+      
+      console.log('Indicators fetched successfully:', data?.length || 0, 'indicators');
+      return data || [];
+    } catch (error) {
+      console.error('Get indicators error:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error code:', error?.code);
+      return [];
+    }
+  },
+    try {
       const { data, error } = await supabaseClient
         .from('indicators')
         .select('*')

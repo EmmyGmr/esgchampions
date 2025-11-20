@@ -158,36 +158,76 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function attachPanelClickHandlers() {
     document.querySelectorAll('.panel-card').forEach(card => {
-      card.addEventListener('click', (e) => {
+      card.addEventListener('click', async (e) => {
         const panelId = card.dataset.panelId;
         if (panelId) {
           currentPanelId = panelId;
-          showIndicatorSelectionModal(panelId);
+          await showIndicatorSelectionModal(panelId);
         }
       });
     });
   }
 
-  function showIndicatorSelectionModal(panelId) {
-    const panel = DB.getPanel(panelId);
-    const indicators = DB.getIndicators(panelId);
-    
-    document.getElementById('selection-modal-title').textContent = `Select Indicators - ${panel.title}`;
-    const indicatorsList = document.getElementById('indicators-selection-list');
-    
-    indicatorsList.innerHTML = indicators.map((indicator, index) => `
-      <div style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; gap: 0.75rem;">
-        <input type="checkbox" id="indicator-${indicator.id}" value="${indicator.id}" 
-               class="indicator-checkbox" style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
-        <label for="indicator-${indicator.id}" style="flex: 1; cursor: pointer;">
-          <div style="font-weight: 500; margin-bottom: 0.25rem;">${indicator.title}</div>
-          <div class="text-gray" style="font-size: 0.875rem;">${indicator.description}</div>
-        </label>
-      </div>
-    `).join('');
+  async function showIndicatorSelectionModal(panelId) {
+    try {
+      console.log('Loading indicators for panel:', panelId);
+      const [panel, indicators] = await Promise.all([
+        DB.getPanel(panelId),
+        DB.getIndicators(panelId)
+      ]);
+      
+      if (!panel) {
+        console.error('Panel not found:', panelId);
+        alert('Panel not found. Please refresh the page.');
+        return;
+      }
+      
+      console.log('Panel loaded:', panel);
+      console.log('Indicators loaded:', indicators);
+      console.log('Indicators is array?', Array.isArray(indicators));
+      
+      const modalTitle = document.getElementById('selection-modal-title');
+      if (modalTitle) {
+        modalTitle.textContent = `Select Indicators - ${panel.title}`;
+      }
+      
+      const indicatorsList = document.getElementById('indicators-selection-list');
+      if (!indicatorsList) {
+        console.error('Indicators selection list element not found');
+        return;
+      }
+      
+      if (!Array.isArray(indicators)) {
+        console.error('Indicators is not an array:', indicators);
+        indicatorsList.innerHTML = '<p class="text-gray">Error loading indicators. Please try again.</p>';
+        return;
+      }
+      
+      if (indicators.length === 0) {
+        indicatorsList.innerHTML = '<p class="text-gray">No indicators found for this panel.</p>';
+      } else {
+        indicatorsList.innerHTML = indicators.map((indicator, index) => `
+          <div style="padding: 0.75rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; gap: 0.75rem;">
+            <input type="checkbox" id="indicator-${indicator.id}" value="${indicator.id}" 
+                   class="indicator-checkbox" style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
+            <label for="indicator-${indicator.id}" style="flex: 1; cursor: pointer;">
+              <div style="font-weight: 500; margin-bottom: 0.25rem;">${indicator.title}</div>
+              <div class="text-gray" style="font-size: 0.875rem;">${indicator.description || ''}</div>
+            </label>
+          </div>
+        `).join('');
+      }
 
-    const modal = document.getElementById('indicator-selection-modal');
-    modal.classList.remove('hidden');
+      const modal = document.getElementById('indicator-selection-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      } else {
+        console.error('Indicator selection modal element not found');
+      }
+    } catch (error) {
+      console.error('Error showing indicator selection modal:', error);
+      alert('Error loading indicators. Please try again.');
+    }
   }
 
   // Modal controls
