@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const points = panel.indicatorCount * 10;
 
           return `
-            <div class="panel-card-dashboard">
+            <div class="panel-card-dashboard" data-panel-id="${panel.id}">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                 <div>
                   <h3 style="margin-bottom: 0.5rem; font-size: 1.125rem;">${panel.icon || '📋'} ${panel.title}</h3>
@@ -296,8 +296,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                   <span style="font-size: 0.875rem; color: #0D4D6C; font-weight: 600;">+${points} points</span>
                 </div>
               </div>
-              <button class="btn-primary" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" onclick="window.location.href='champion-indicators.html?panel=${panel.id}'">
-                ${status === 'Not Started' ? 'Continue Panel' : 'View details >'}
+              <button class="btn-primary panel-select-btn" style="width: 100%; padding: 0.5rem; font-size: 0.875rem;" data-panel-id="${panel.id}">
+                ${status === 'Not Started' ? 'Select Indicators' : 'View details >'}
               </button>
             </div>
           `;
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const points = panel.reviewedCount * 10;
 
           return `
-            <div class="panel-card-dashboard">
+            <div class="panel-card-dashboard" data-panel-id="${panel.id}">
               <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
                 <div>
                   <h3 style="margin-bottom: 0.5rem; font-size: 1.125rem;">${panel.icon || '📋'} ${panel.title}</h3>
@@ -518,11 +518,208 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
+    // ============================================
+    // INDICATOR SELECTION MODAL
+    // ============================================
+    let currentPanelId = null;
+
+    async function showIndicatorSelectionModal(panelId) {
+      try {
+        console.log('Loading indicators for panel:', panelId);
+        const [panel, indicators] = await Promise.all([
+          DB.getPanel(panelId),
+          DB.getIndicators(panelId)
+        ]);
+        
+        if (!panel) {
+          console.error('Panel not found:', panelId);
+          alert('Panel not found. Please refresh the page.');
+          return;
+        }
+        
+        const modalTitle = document.getElementById('selection-modal-title');
+        if (modalTitle) {
+          modalTitle.textContent = `Select Indicators - ${panel.title}`;
+        }
+        
+        const indicatorsList = document.getElementById('indicators-selection-list');
+        if (!indicatorsList) {
+          console.error('Indicators selection list element not found');
+          return;
+        }
+        
+        if (!Array.isArray(indicators) || indicators.length === 0) {
+          indicatorsList.innerHTML = '<p class="text-gray">No indicators found for this panel.</p>';
+        } else {
+          indicatorsList.innerHTML = indicators.map((indicator) => {
+            const importance = indicator.importance || 'High';
+            const difficulty = indicator.difficulty || 'Moderate';
+            const estimatedTime = indicator.estimated_time || '3-5 min';
+            const frameworks = indicator.frameworks || 'GRI 305-1';
+            const impactStars = indicator.impact_stars || 5;
+            const stars = '★'.repeat(impactStars) + '☆'.repeat(5 - impactStars);
+            const importanceClass = importance.toLowerCase() === 'high' ? 'tag-high' : importance.toLowerCase() === 'medium' ? 'tag-medium' : 'tag-low';
+            const difficultyClass = difficulty.toLowerCase() === 'easy' ? 'tag-easy' : difficulty.toLowerCase() === 'moderate' ? 'tag-moderate' : difficulty.toLowerCase() === 'difficult' ? 'tag-difficult' : 'tag-complex';
+            
+            return `
+              <div style="padding: 1rem; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-start; gap: 0.75rem;">
+                <input type="checkbox" id="indicator-${indicator.id}" value="${indicator.id}" 
+                       class="indicator-checkbox" style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer;">
+                <label for="indicator-${indicator.id}" style="flex: 1; cursor: pointer;">
+                  <div style="font-weight: 500; margin-bottom: 0.5rem; font-size: 1rem;">${indicator.title}</div>
+                  <div class="text-gray" style="font-size: 0.875rem; margin-bottom: 0.75rem;">${indicator.description || ''}</div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span class="indicator-tag ${importanceClass}">${importance} Importance</span>
+                    <span class="indicator-tag ${difficultyClass}">${difficulty}</span>
+                    <span class="indicator-tag tag-time">${estimatedTime}</span>
+                    <span class="indicator-tag tag-framework">${frameworks}</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; color: #fbbf24; font-size: 0.875rem;">
+                    <span>Impact:</span>
+                    <span style="font-size: 1rem;">${stars}</span>
+                  </div>
+                </label>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const modal = document.getElementById('indicator-selection-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          currentPanelId = panelId;
+        }
+      } catch (error) {
+        console.error('Error showing indicator selection modal:', error);
+        alert('Error loading indicators. Please try again.');
+      }
+    }
+
+    // Modal controls
+    const closeSelectionModal = document.getElementById('close-selection-modal');
+    const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+    const selectAllBtn = document.getElementById('select-all-indicators');
+    const deselectAllBtn = document.getElementById('deselect-all-indicators');
+    const proceedReviewBtn = document.getElementById('proceed-review-btn');
+    const selectionModal = document.getElementById('indicator-selection-modal');
+
+    if (closeSelectionModal) {
+      closeSelectionModal.addEventListener('click', () => {
+        if (selectionModal) selectionModal.classList.add('hidden');
+        currentPanelId = null;
+      });
+    }
+
+    if (cancelSelectionBtn) {
+      cancelSelectionBtn.addEventListener('click', () => {
+        if (selectionModal) selectionModal.classList.add('hidden');
+        currentPanelId = null;
+      });
+    }
+
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('.indicator-checkbox').forEach(cb => {
+          cb.checked = true;
+        });
+      });
+    }
+
+    if (deselectAllBtn) {
+      deselectAllBtn.addEventListener('click', () => {
+        document.querySelectorAll('.indicator-checkbox').forEach(cb => {
+          cb.checked = false;
+        });
+      });
+    }
+
+    if (proceedReviewBtn) {
+      proceedReviewBtn.addEventListener('click', async () => {
+        const selectedIndicators = Array.from(document.querySelectorAll('.indicator-checkbox:checked'))
+          .map(cb => cb.value);
+        
+        if (selectedIndicators.length === 0) {
+          alert('Please select at least one indicator to review');
+          return;
+        }
+
+        // Save last activity
+        if (currentPanelId && selectedIndicators.length > 0) {
+          try {
+            await supabaseClient
+              .from('champions')
+              .update({
+                last_active_panel_id: currentPanelId,
+                last_active_indicator_id: selectedIndicators[0],
+                last_activity_at: new Date().toISOString()
+              })
+              .eq('id', currentChampion.id);
+          } catch (error) {
+            console.error('Error saving last activity:', error);
+          }
+        }
+
+        // Store selected indicators and navigate to review page
+        localStorage.setItem('selected-indicators', JSON.stringify(selectedIndicators));
+        if (selectionModal) selectionModal.classList.add('hidden');
+        window.location.href = `champion-indicators.html?panel=${currentPanelId}`;
+      });
+    }
+
+    // Attach click handlers to panel buttons
+    function attachPanelClickHandlers() {
+      document.querySelectorAll('.panel-select-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const panelId = btn.dataset.panelId;
+          if (panelId) {
+            await showIndicatorSelectionModal(panelId);
+          }
+        });
+      });
+    }
+
+    // Also make panel cards clickable
+    function attachPanelCardClickHandlers() {
+      document.querySelectorAll('.panel-card-dashboard').forEach(card => {
+        card.addEventListener('click', async (e) => {
+          // Don't trigger if clicking on button
+          if (e.target.closest('.panel-select-btn')) return;
+          
+          const panelId = card.dataset.panelId || card.querySelector('.panel-select-btn')?.dataset.panelId;
+          if (panelId) {
+            await showIndicatorSelectionModal(panelId);
+          }
+        });
+      });
+    }
+
     // Load all data
     await loadRecommendedPanels();
     await loadAllPanels();
     await loadActivity();
     await calculateCredits();
+    
+    // Attach handlers after panels are loaded
+    setTimeout(() => {
+      attachPanelClickHandlers();
+      attachPanelCardClickHandlers();
+    }, 500);
+
+    // Re-attach handlers when panels are re-rendered
+    const observer = new MutationObserver(() => {
+      attachPanelClickHandlers();
+      attachPanelCardClickHandlers();
+    });
+    
+    const panelsContainer = document.getElementById('all-panels-grid');
+    const recommendedContainer = document.getElementById('recommended-panels');
+    if (panelsContainer) {
+      observer.observe(panelsContainer, { childList: true, subtree: true });
+    }
+    if (recommendedContainer) {
+      observer.observe(recommendedContainer, { childList: true, subtree: true });
+    }
 
   } catch (error) {
     console.error('Error loading dashboard:', error);
