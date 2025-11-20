@@ -1,59 +1,109 @@
-// Indicators page functionality
+// Indicators page functionality with Supabase
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Check authentication
-  const currentChampion = DB.getCurrentChampion();
-  if (!currentChampion) {
-    window.location.href = 'champion-login.html';
-    return;
-  }
-
-  // Get panel ID from URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const panelId = urlParams.get('panel');
-  
-  if (!panelId) {
-    window.location.href = 'champion-panels.html';
-    return;
-  }
-
-  // Load panel information
-  const panel = DB.getPanel(panelId);
-  if (!panel) {
-    window.location.href = 'champion-panels.html';
-    return;
-  }
-
-  document.getElementById('panel-title').textContent = `${panel.icon} ${panel.title}`;
-  document.getElementById('panel-description').textContent = panel.description;
-  document.getElementById('panel-breadcrumb').textContent = panel.title;
-
-  // Load indicators - check if specific indicators were selected
-  let allIndicators = DB.getIndicators(panelId);
-  let selectedIndicatorIds = null;
-  
-  // Check if there are selected indicators from the selection modal
-  const storedSelected = localStorage.getItem('selected-indicators');
-  if (storedSelected) {
-    selectedIndicatorIds = JSON.parse(storedSelected);
-    localStorage.removeItem('selected-indicators'); // Clear after reading
-    // Filter to only show selected indicators
-    allIndicators = allIndicators.filter(ind => selectedIndicatorIds.includes(ind.id));
-  }
-  
-  let indicators = allIndicators;
-  document.getElementById('indicators-count').textContent = `${indicators.length}${selectedIndicatorIds ? ' selected' : ''} indicator${indicators.length !== 1 ? 's' : ''}`;
-
-  function renderIndicators(filteredIndicators) {
-    const indicatorsList = document.getElementById('indicators-list');
-    
-    if (filteredIndicators.length === 0) {
-      indicatorsList.innerHTML = '<p class="text-gray">No indicators found matching your search.</p>';
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Check authentication
+    const currentChampion = await DB.getCurrentChampion();
+    if (!currentChampion) {
+      window.location.href = 'champion-login.html';
       return;
     }
 
-    const indicatorsHTML = filteredIndicators.map(indicator => {
-      const existingReview = getExistingReview(currentChampion.id, indicator.id);
+    // Get panel ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const panelId = urlParams.get('panel');
+    
+    if (!panelId) {
+      window.location.href = 'champion-panels.html';
+      return;
+    }
+
+    console.log('Loading panel and indicators for panel ID:', panelId);
+
+    // Load panel information (async)
+    const panel = await DB.getPanel(panelId);
+    if (!panel) {
+      console.error('Panel not found:', panelId);
+      window.location.href = 'champion-panels.html';
+      return;
+    }
+
+    console.log('Panel loaded:', panel);
+
+    // Update panel information in UI
+    const panelTitleEl = document.getElementById('panel-title');
+    const panelDescEl = document.getElementById('panel-description');
+    const panelBreadcrumbEl = document.getElementById('panel-breadcrumb');
+    
+    if (panelTitleEl) {
+      panelTitleEl.textContent = `${panel.icon || '📋'} ${panel.title || 'Panel'}`;
+    }
+    if (panelDescEl) {
+      panelDescEl.textContent = panel.description || '';
+    }
+    if (panelBreadcrumbEl) {
+      panelBreadcrumbEl.textContent = panel.title || 'Panel';
+    }
+
+    // Load indicators - check if specific indicators were selected (async)
+    console.log('Fetching indicators for panel:', panelId);
+    let allIndicators = await DB.getIndicators(panelId);
+    console.log('Indicators fetched:', allIndicators);
+    console.log('Is array?', Array.isArray(allIndicators));
+    
+    // Ensure allIndicators is an array
+    if (!Array.isArray(allIndicators)) {
+      console.error('Indicators is not an array:', allIndicators);
+      allIndicators = [];
+    }
+    
+    let selectedIndicatorIds = null;
+    
+    // Check if there are selected indicators from the selection modal
+    const storedSelected = localStorage.getItem('selected-indicators');
+    if (storedSelected) {
+      try {
+        selectedIndicatorIds = JSON.parse(storedSelected);
+        localStorage.removeItem('selected-indicators'); // Clear after reading
+        console.log('Selected indicator IDs:', selectedIndicatorIds);
+        // Filter to only show selected indicators
+        if (Array.isArray(selectedIndicatorIds) && selectedIndicatorIds.length > 0) {
+          allIndicators = allIndicators.filter(ind => selectedIndicatorIds.includes(ind.id));
+          console.log('Filtered indicators:', allIndicators.length);
+        }
+      } catch (error) {
+        console.error('Error parsing selected indicators:', error);
+      }
+    }
+  
+    let indicators = allIndicators;
+    const indicatorsCountEl = document.getElementById('indicators-count');
+    if (indicatorsCountEl) {
+      indicatorsCountEl.textContent = `${indicators.length}${selectedIndicatorIds ? ' selected' : ''} indicator${indicators.length !== 1 ? 's' : ''}`;
+    }
+
+    function renderIndicators(filteredIndicators) {
+      const indicatorsList = document.getElementById('indicators-list');
+      
+      if (!indicatorsList) {
+        console.error('Indicators list element not found');
+        return;
+      }
+      
+      // Ensure filteredIndicators is an array
+      if (!Array.isArray(filteredIndicators)) {
+        console.error('filteredIndicators is not an array:', filteredIndicators);
+        indicatorsList.innerHTML = '<p class="text-gray">Error loading indicators. Please refresh the page.</p>';
+        return;
+      }
+      
+      if (filteredIndicators.length === 0) {
+        indicatorsList.innerHTML = '<p class="text-gray">No indicators found matching your search.</p>';
+        return;
+      }
+
+      const indicatorsHTML = filteredIndicators.map(indicator => {
+        const existingReview = getExistingReview(currentChampion.id, indicator.id);
       const frameworks = indicator.frameworks || 'N/A';
       const sectorContext = indicator.sectorContext || 'All';
       const validationQuestion = indicator.validationQuestion || '';
@@ -275,7 +325,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.location.href = 'champion-panels.html';
   }
 
-  renderIndicators(indicators);
+    // Initial render
+    console.log('Rendering', indicators.length, 'indicators...');
+    renderIndicators(indicators);
 
   function applyFilters() {
     const searchTerm = document.getElementById('indicator-search')?.value.toLowerCase() || '';
