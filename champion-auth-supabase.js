@@ -84,6 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store session info in localStorage for quick access (optional)
         localStorage.setItem('current-champion-id', champion.id);
 
+        // Dispatch login event for navigation system
+        window.dispatchEvent(new CustomEvent('login', { detail: { champion } }));
+
         // Redirect to dashboard
         window.location.href = 'champion-dashboard.html';
       } catch (error) {
@@ -229,6 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Store session info
         localStorage.setItem('current-champion-id', champion.id);
+
+        // Dispatch login event for navigation system
+        window.dispatchEvent(new CustomEvent('login', { detail: { champion } }));
 
         alert('Registration successful! Redirecting to dashboard...');
         window.location.href = 'champion-dashboard.html';

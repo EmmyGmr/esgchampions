@@ -46,6 +46,14 @@ async function initLogout() {
         localStorage.removeItem('current-champion');
         localStorage.removeItem('current-champion-id');
         
+        // Dispatch logout event for navigation system
+        window.dispatchEvent(new CustomEvent('logout'));
+        
+        // Update navigation immediately (if dynamic navigation is loaded)
+        if (typeof window.DynamicNavigation !== 'undefined') {
+          await window.DynamicNavigation.update();
+        }
+        
         // Redirect to login page
         window.location.href = 'champion-login.html';
       }
