@@ -44,6 +44,31 @@
             </label>
             <input type="email" id="login-email" name="email" placeholder="champion@example.com" required>
           </div>
+          
+          <script>
+            // Pre-fill email from URL parameter (when redirected from registration)
+            document.addEventListener('DOMContentLoaded', () => {
+              const urlParams = new URLSearchParams(window.location.search);
+              const email = urlParams.get('email');
+              if (email) {
+                const emailInput = document.getElementById('login-email');
+                if (emailInput) {
+                  emailInput.value = decodeURIComponent(email);
+                  // Show a helpful message
+                  const emailGroup = emailInput.closest('.form-group');
+                  if (emailGroup && !document.getElementById('email-exists-message')) {
+                    const message = document.createElement('p');
+                    message.id = 'email-exists-message';
+                    message.style.color = '#0D4D6C';
+                    message.style.fontSize = '0.875rem';
+                    message.style.marginTop = '0.5rem';
+                    message.textContent = '✓ This email is already registered. Please log in with your password.';
+                    emailGroup.appendChild(message);
+                  }
+                }
+              }
+            });
+          </script>
 
           <!-- Password -->
           <div class="form-group">

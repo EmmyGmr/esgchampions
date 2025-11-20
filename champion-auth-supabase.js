@@ -69,6 +69,30 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Check if email already exists (redirect to login if registered)
+  async function checkEmailExists(email) {
+    try {
+      // Check if email exists in champions table
+      const { data, error } = await supabaseClient
+        .from('champions')
+        .select('email')
+        .eq('email', email)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned (email doesn't exist - this is OK)
+        console.error('Error checking email:', error);
+        return false; // Allow registration if check fails
+      }
+
+      // If data exists, email is already registered
+      return !!data;
+    } catch (error) {
+      console.error('Error checking email:', error);
+      return false; // Allow registration if check fails
+    }
+  }
+
   // Registration form (if on register page)
   const registerForm = document.getElementById('champion-register-form');
   if (registerForm) {
@@ -121,6 +145,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = registerForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.disabled = true;
+        submitBtn.textContent = 'Checking email...';
+
+        // Check if email already exists
+        const emailExists = await checkEmailExists(formData.email);
+        if (emailExists) {
+          alert('An account with this email already exists. Redirecting to login page...');
+          // Pre-fill email in login page
+          window.location.href = `champion-login.html?email=${encodeURIComponent(formData.email)}`;
+          return;
+        }
+
         submitBtn.textContent = 'Registering...';
 
         // Sign up with Supabase
@@ -155,6 +190,18 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'champion-dashboard.html';
       } catch (error) {
         console.error('Registration error:', error);
+        
+        // Check if error is about existing user
+        if (error.message && (
+          error.message.includes('already registered') ||
+          error.message.includes('User already registered') ||
+          error.message.includes('already exists')
+        )) {
+          alert('An account with this email already exists. Redirecting to login page...');
+          window.location.href = `champion-login.html?email=${encodeURIComponent(formData.email)}`;
+          return;
+        }
+        
         alert(error.message || 'Registration failed. Please try again.');
         
         // Reset button
