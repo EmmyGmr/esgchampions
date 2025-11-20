@@ -23,6 +23,10 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created
 -- RLS Policies for notifications
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can read own notifications" ON notifications;
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
+
 -- Policy: Users can read their own notifications
 CREATE POLICY "Users can read own notifications" ON notifications
   FOR SELECT USING (auth.uid() = champion_id);
