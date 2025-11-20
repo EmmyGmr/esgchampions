@@ -1,8 +1,37 @@
 // Champion Authentication System with Supabase
 // This replaces champion-auth.js functionality with Supabase
 
-// Password toggle functionality
-document.addEventListener('DOMContentLoaded', () => {
+// Handle OAuth callback on page load
+document.addEventListener('DOMContentLoaded', async () => {
+  // Check if this is an OAuth callback
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  const error = urlParams.get('error');
+
+  if (code || error) {
+    // This is an OAuth callback
+    try {
+      const result = await SupabaseService.handleOAuthCallback();
+      
+      if (result && result.user) {
+        console.log('LinkedIn login successful');
+        
+        // Dispatch login event for navigation system
+        window.dispatchEvent(new CustomEvent('login', { detail: { champion: result.champion } }));
+        
+        // Redirect to dashboard
+        window.location.href = 'champion-dashboard.html';
+        return;
+      }
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      alert(error.message || 'LinkedIn login failed. Please try again.');
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  // Password toggle functionality
   const passwordToggles = document.querySelectorAll('.password-toggle');
   passwordToggles.forEach(toggle => {
     toggle.addEventListener('click', (e) => {
@@ -112,6 +141,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn = loginForm.querySelector('button[type="submit"]');
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
+      }
+    });
+  }
+
+  // LinkedIn Login Button
+  const linkedinLoginBtn = document.getElementById('linkedin-login-btn');
+  if (linkedinLoginBtn) {
+    linkedinLoginBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      try {
+        // Show loading state
+        linkedinLoginBtn.disabled = true;
+        const originalText = linkedinLoginBtn.innerHTML;
+        linkedinLoginBtn.innerHTML = '<span>Redirecting to LinkedIn...</span>';
+        
+        // Initiate LinkedIn OAuth
+        await SupabaseService.signInWithLinkedIn();
+        // User will be redirected to LinkedIn, then back to this page
+      } catch (error) {
+        console.error('LinkedIn login error:', error);
+        alert(error.message || 'Failed to initiate LinkedIn login. Please try again.');
+        
+        // Reset button
+        linkedinLoginBtn.disabled = false;
+        linkedinLoginBtn.innerHTML = originalText;
       }
     });
   }

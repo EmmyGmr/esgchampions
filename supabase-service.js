@@ -128,6 +128,147 @@ const SupabaseService = {
   },
 
   /**
+   * Sign in with LinkedIn OAuth
+   */
+  async signInWithLinkedIn() {
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'linkedin',
+        options: {
+          redirectTo: `${window.location.origin}/champion-login.html`,
+          scopes: 'r_liteprofile r_emailaddress'
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('LinkedIn OAuth error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Handle OAuth callback and create/update champion profile
+   */
+  async handleOAuthCallback() {
+    try {
+      // Check if this is an OAuth callback
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+
+      if (error) {
+        console.error('OAuth error:', error, errorDescription);
+        throw new Error(errorDescription || 'OAuth authentication failed');
+      }
+
+      if (!code) {
+        // Not an OAuth callback
+        return null;
+      }
+
+      // Get the current session (Supabase handles the OAuth exchange)
+      const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw sessionError;
+      }
+
+      if (!session || !session.user) {
+        console.log('No session found after OAuth callback');
+        return null;
+      }
+
+      console.log('OAuth callback successful, user:', session.user);
+
+      // Get user metadata from LinkedIn
+      const userMetadata = session.user.user_metadata || {};
+      const linkedinData = session.user.app_metadata?.provider === 'linkedin' ? userMetadata : null;
+
+      // Extract LinkedIn profile information
+      const firstName = linkedinData?.first_name || userMetadata?.first_name || userMetadata?.full_name?.split(' ')[0] || '';
+      const lastName = linkedinData?.last_name || userMetadata?.last_name || userMetadata?.full_name?.split(' ').slice(1).join(' ') || '';
+      const email = session.user.email || linkedinData?.email || '';
+      const linkedinProfile = linkedinData?.avatar_url || userMetadata?.avatar_url || null;
+      const linkedinId = linkedinData?.sub || userMetadata?.sub || null;
+
+      // Check if champion profile exists
+      let champion = await this.getCurrentChampion();
+
+      if (champion) {
+        // Update existing champion profile with LinkedIn data
+        console.log('Updating existing champion profile with LinkedIn data');
+        const updateData = {
+          email: email || champion.email,
+          linkedin: linkedinId || champion.linkedin,
+          ...(firstName && { first_name: firstName }),
+          ...(lastName && { last_name: lastName })
+        };
+
+        const { data: updatedChampion, error: updateError } = await supabaseClient
+          .from('champions')
+          .update(updateData)
+          .eq('id', session.user.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Error updating champion profile:', updateError);
+          // Continue anyway - user is authenticated
+        } else {
+          champion = updatedChampion;
+        }
+      } else {
+        // Create new champion profile from LinkedIn data
+        console.log('Creating new champion profile from LinkedIn data');
+        const insertData = {
+          id: session.user.id,
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          linkedin: linkedinId,
+          // Set defaults for required fields
+          cla_accepted: false,
+          nda_accepted: false,
+          terms_accepted: false,
+          ip_policy_accepted: false
+        };
+
+        const { data: newChampion, error: insertError } = await supabaseClient
+          .from('champions')
+          .upsert(insertData, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating champion profile:', insertError);
+          // Continue anyway - user is authenticated, profile might be created by trigger
+          champion = await this.getCurrentChampion();
+        } else {
+          champion = newChampion;
+        }
+      }
+
+      // Store session info
+      localStorage.setItem('current-champion-id', session.user.id);
+
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      return { user: session.user, champion };
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Sign out current user
    */
   async signOut() {
