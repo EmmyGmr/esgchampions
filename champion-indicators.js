@@ -408,7 +408,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       inviteModal.classList.add('hidden');
     });
   }
-
-  // Logout is handled by logout.js
+  
+  } catch (error) {
+    console.error('Error initializing indicators page:', error);
+    const indicatorsList = document.getElementById('indicators-list');
+    if (indicatorsList) {
+      indicatorsList.innerHTML = '<p class="text-gray">Error loading indicators. Please refresh the page.</p>';
+    }
+    const panelTitleEl = document.getElementById('panel-title');
+    if (panelTitleEl) {
+      panelTitleEl.textContent = 'Error Loading Panel';
+    }
+  }
 });
 
