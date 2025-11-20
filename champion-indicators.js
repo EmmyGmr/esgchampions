@@ -61,19 +61,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Check if there are selected indicators from the selection modal
     const storedSelected = localStorage.getItem('selected-indicators');
+    console.log('Stored selected indicators from localStorage:', storedSelected);
+    
     if (storedSelected) {
       try {
         selectedIndicatorIds = JSON.parse(storedSelected);
-        localStorage.removeItem('selected-indicators'); // Clear after reading
-        console.log('Selected indicator IDs:', selectedIndicatorIds);
+        console.log('Parsed selected indicator IDs:', selectedIndicatorIds);
+        console.log('Total indicators before filtering:', allIndicators.length);
+        console.log('Indicator IDs available:', allIndicators.map(ind => ind.id));
+        
         // Filter to only show selected indicators
         if (Array.isArray(selectedIndicatorIds) && selectedIndicatorIds.length > 0) {
-          allIndicators = allIndicators.filter(ind => selectedIndicatorIds.includes(ind.id));
-          console.log('Filtered indicators:', allIndicators.length);
+          const beforeFilter = allIndicators.length;
+          allIndicators = allIndicators.filter(ind => {
+            const isSelected = selectedIndicatorIds.includes(ind.id);
+            if (!isSelected) {
+              console.log(`Indicator ${ind.id} (${ind.title}) not in selected list`);
+            }
+            return isSelected;
+          });
+          console.log(`Filtered from ${beforeFilter} to ${allIndicators.length} indicators`);
+          console.log('Filtered indicator IDs:', allIndicators.map(ind => ind.id));
+          
+          // Only clear localStorage after successful filtering
+          localStorage.removeItem('selected-indicators');
+        } else {
+          console.warn('selectedIndicatorIds is not a valid array:', selectedIndicatorIds);
         }
       } catch (error) {
         console.error('Error parsing selected indicators:', error);
+        console.error('Raw stored value:', storedSelected);
       }
+    } else {
+      console.log('No selected indicators found in localStorage - showing all indicators for panel');
     }
   
     let indicators = allIndicators;
@@ -269,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function submitAllReviews() {
+  async function submitAllReviews() {
     const allForms = document.querySelectorAll('.validation-form');
     const reviewsToSubmit = [];
     let hasErrors = false;
