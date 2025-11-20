@@ -42,7 +42,11 @@ const SupabaseService = {
 
       console.log('Auth user created:', authData.user.id);
 
-      // 2. Create champion profile
+      // Wait a moment for the trigger to potentially create the profile
+      // (if trigger is set up, it will create a basic profile)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 2. Create or update champion profile
       const insertData = {
         id: authData.user.id,
         first_name: championData.firstName,
@@ -65,26 +69,36 @@ const SupabaseService = {
         ip_policy_accepted: championData.ipPolicyAccepted || false
       };
 
-      console.log('Inserting champion profile:', insertData);
+      console.log('Inserting/updating champion profile:', insertData);
 
+      // Use upsert to handle case where trigger already created a basic profile
       const { data: championProfile, error: profileError } = await supabaseClient
         .from('champions')
-        .insert(insertData)
+        .upsert(insertData, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
         .select()
         .single();
 
       if (profileError) {
-        console.error('Champion profile insert error:', profileError);
+        console.error('Champion profile insert/update error:', profileError);
         console.error('Error details:', {
           code: profileError.code,
           message: profileError.message,
           details: profileError.details,
           hint: profileError.hint
         });
+        
+        // If foreign key error, provide helpful message
+        if (profileError.message && profileError.message.includes('foreign key')) {
+          throw new Error('Registration failed: User account was not created properly. Please try again or contact support.');
+        }
+        
         throw new Error(`Failed to create champion profile: ${profileError.message}`);
       }
 
-      console.log('Champion profile created successfully:', championProfile);
+      console.log('Champion profile created/updated successfully:', championProfile);
 
       return { user: authData.user, champion: championProfile };
     } catch (error) {
