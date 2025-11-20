@@ -91,7 +91,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (allIndicators.length === 0) {
             console.warn('No indicators matched after filtering! This might indicate an ID mismatch.');
             console.warn('Selected IDs:', selectedIdsAsStrings);
-            console.warn('Available indicator IDs:', allIndicators.map(ind => String(ind.id)));
+            // Get all available indicator IDs before filtering
+            const allAvailableIds = (await DB.getIndicators(panelId)).map(ind => String(ind.id));
+            console.warn('Available indicator IDs:', allAvailableIds);
           }
           
           // Only clear localStorage after successful filtering
