@@ -457,43 +457,117 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inviteBtn = document.getElementById('invite-peers-btn');
   const inviteModal = document.getElementById('invite-modal');
   const closeInviteModal = document.getElementById('close-invite-modal');
-  const cancelInvite = document.getElementById('cancel-invite');
   const inviteForm = document.getElementById('invite-form');
+  const inviteEmailInput = document.getElementById('invite-email');
+  const inviteMessageInput = document.getElementById('invite-message');
+  const previewContent = document.getElementById('preview-content');
+  const shareLinkedInBtn = document.getElementById('share-linkedin-btn');
+
+  // Update preview when message changes
+  function updateInvitationPreview() {
+    if (previewContent && inviteMessageInput) {
+      const message = inviteMessageInput.value.trim() || "I'm inviting you to review an ESG indicator.";
+      previewContent.textContent = `Hello,\n\n${message}`;
+    }
+  }
+
+  // Initialize preview on load
+  if (inviteMessageInput) {
+    inviteMessageInput.addEventListener('input', updateInvitationPreview);
+    updateInvitationPreview(); // Set initial preview
+  }
 
   if (inviteBtn) {
     inviteBtn.addEventListener('click', () => {
       inviteModal.classList.remove('hidden');
+      updateInvitationPreview(); // Update preview when modal opens
     });
   }
 
   if (closeInviteModal) {
     closeInviteModal.addEventListener('click', () => {
       inviteModal.classList.add('hidden');
+      if (inviteForm) inviteForm.reset();
+      updateInvitationPreview(); // Reset preview
     });
   }
 
-  if (cancelInvite) {
-    cancelInvite.addEventListener('click', () => {
-      inviteModal.classList.add('hidden');
-      inviteForm.reset();
+  // Close modal when clicking outside
+  if (inviteModal) {
+    inviteModal.addEventListener('click', (e) => {
+      if (e.target === inviteModal) {
+        inviteModal.classList.add('hidden');
+        if (inviteForm) inviteForm.reset();
+        updateInvitationPreview();
+      }
     });
   }
 
+  // Validate email addresses
+  function validateEmails(emailString) {
+    if (!emailString.trim()) return { valid: false, emails: [] };
+    
+    const emails = emailString.split(',').map(email => email.trim()).filter(email => email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmails = emails.filter(email => !emailRegex.test(email));
+    
+    return {
+      valid: invalidEmails.length === 0 && emails.length > 0,
+      emails: emails,
+      invalid: invalidEmails
+    };
+  }
+
+  // Handle form submission
   if (inviteForm) {
-    inviteForm.addEventListener('submit', (e) => {
+    inviteForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('invite-email').value.trim();
-      const message = document.getElementById('invite-message').value.trim();
+      const emailString = inviteEmailInput?.value.trim() || '';
+      const message = inviteMessageInput?.value.trim() || "I'm inviting you to review an ESG indicator.\nThanks!";
       
-      if (!email) {
-        alert('Please enter an email address');
+      const emailValidation = validateEmails(emailString);
+      
+      if (!emailValidation.valid) {
+        if (emailValidation.invalid.length > 0) {
+          alert(`Please enter valid email addresses. Invalid: ${emailValidation.invalid.join(', ')}`);
+        } else {
+          alert('Please enter at least one email address');
+        }
         return;
       }
       
-      DB.saveInvitation(currentChampion.id, email, panelId, message);
-      alert('Invitation sent successfully!');
-      inviteForm.reset();
-      inviteModal.classList.add('hidden');
+      try {
+        // Send invitations to all emails
+        const invitationPromises = emailValidation.emails.map(email => 
+          DB.saveInvitation(currentChampion.id, email, panelId, message)
+        );
+        
+        await Promise.all(invitationPromises);
+        alert(`Invitations sent successfully to ${emailValidation.emails.length} recipient(s)!`);
+        inviteForm.reset();
+        updateInvitationPreview();
+        inviteModal.classList.add('hidden');
+      } catch (error) {
+        console.error('Error sending invitations:', error);
+        alert('Failed to send invitations. Please try again.');
+      }
+    });
+  }
+
+  // Handle LinkedIn share
+  if (shareLinkedInBtn) {
+    shareLinkedInBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const message = inviteMessageInput?.value.trim() || "I'm inviting you to review an ESG indicator.\nThanks!";
+      const panelTitle = document.getElementById('panel-title')?.textContent || 'ESG Indicator';
+      
+      // Create LinkedIn share URL
+      const shareText = encodeURIComponent(`${message}\n\nReview: ${panelTitle}`);
+      const shareUrl = encodeURIComponent(window.location.href);
+      const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+      
+      // Open LinkedIn share in new window
+      window.open(linkedInShareUrl, 'LinkedIn Share', 'width=600,height=400,menubar=no,toolbar=no,resizable=yes,scrollbars=yes');
     });
   }
   

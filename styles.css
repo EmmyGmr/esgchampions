@@ -183,6 +183,38 @@ nav a:hover {
   flex-shrink: 0;
 }
 
+/* LinkedIn Share Button (for invite modal) */
+.btn-linkedin-share {
+  padding: 0.75rem 1.5rem;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-linkedin-share:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn-linkedin-share:active {
+  background-color: #f3f4f6;
+}
+
+.btn-linkedin-share svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
 /* Footer Styles */
 footer {
   background-color: #ffffff;
