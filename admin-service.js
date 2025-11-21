@@ -485,6 +485,32 @@ const AdminService = {
   },
 
   /**
+   * Update indicators' panel_id (move indicators to a panel)
+   */
+  async addIndicatorsToPanel(indicatorIds, panelId) {
+    try {
+      if (!Array.isArray(indicatorIds) || indicatorIds.length === 0) {
+        throw new Error('No indicators selected');
+      }
+
+      const { data, error } = await supabaseClient
+        .from('indicators')
+        .update({ 
+          panel_id: panelId,
+          updated_at: new Date().toISOString()
+        })
+        .in('id', indicatorIds)
+        .select();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Add indicators to panel error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Delete an indicator
    */
   async deleteIndicator(indicatorId) {

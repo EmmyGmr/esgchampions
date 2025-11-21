@@ -125,6 +125,7 @@ async function loadPanels() {
             <span class="category-badge category-${panel.category}">${panel.category}</span>
           </div>
           <div class="panel-actions">
+            <button class="btn-secondary" onclick="openAddIndicatorsToPanel('${panel.id}', '${panel.title.replace(/'/g, "\\'")}')" style="background-color: #0D4D6C; color: white; border-color: #0D4D6C;">Add Indic</button>
             <button class="btn-secondary" onclick="editPanel('${panel.id}')">Edit</button>
             <button class="btn-secondary" onclick="deletePanelConfirm('${panel.id}', '${panel.title.replace(/'/g, "\\'")}')" style="color: #ef4444;">Delete</button>
           </div>
@@ -447,9 +448,175 @@ async function deleteIndicatorConfirm(indicatorId, indicatorTitle) {
   }
 }
 
+// ============================================
+// ADD INDICATORS TO PANEL FUNCTIONS
+// ============================================
+
+let currentPanelForIndicators = null;
+let allIndicatorsForSelection = [];
+
+async function openAddIndicatorsToPanel(panelId, panelTitle) {
+  currentPanelForIndicators = panelId;
+  const modal = document.getElementById('add-indicators-to-panel-modal');
+  const title = document.getElementById('add-indicators-modal-title');
+  const panelName = document.getElementById('add-indicators-panel-name');
+  const indicatorsList = document.getElementById('indicators-selection-list');
+
+  if (!modal || !title || !panelName || !indicatorsList) {
+    console.error('Add indicators modal elements not found');
+    return;
+  }
+
+  title.textContent = 'Add Indicators to Panel';
+  panelName.textContent = `Panel: ${panelTitle}`;
+  indicatorsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⏳</div><p>Loading indicators...</p></div>';
+
+  modal.classList.remove('hidden');
+
+  // Load all indicators
+  try {
+    allIndicatorsForSelection = await AdminService.getAllIndicators({ panelId: 'all' });
+    
+    if (allIndicatorsForSelection.length === 0) {
+      indicatorsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No indicators found in the system.</p></div>';
+      return;
+    }
+
+    // Render indicators with checkboxes
+    indicatorsList.innerHTML = allIndicatorsForSelection.map(indicator => {
+      const currentPanel = indicator.panels;
+      const isInCurrentPanel = indicator.panel_id === panelId;
+      
+      return `
+        <div style="padding: 0.75rem; border-bottom: 1px solid #e5e7eb; ${isInCurrentPanel ? 'background-color: #f0fdf4;' : ''}">
+          <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer;">
+            <input type="checkbox" 
+                   class="indicator-checkbox" 
+                   data-indicator-id="${indicator.id}" 
+                   ${isInCurrentPanel ? 'checked disabled' : ''}
+                   style="margin-top: 0.25rem; width: 1.25rem; height: 1.25rem; cursor: pointer; flex-shrink: 0;">
+            <div style="flex: 1;">
+              <div style="font-weight: 500; margin-bottom: 0.25rem;">${indicator.title}</div>
+              ${indicator.description ? `<div style="color: #6b7280; font-size: 0.875rem; margin-bottom: 0.25rem;">${indicator.description}</div>` : ''}
+              ${currentPanel ? `<div style="color: #6b7280; font-size: 0.75rem;">Current Panel: <strong>${currentPanel.title}</strong></div>` : ''}
+              ${isInCurrentPanel ? `<div style="color: #059669; font-size: 0.75rem; margin-top: 0.25rem;">✓ Already in this panel</div>` : ''}
+            </div>
+          </label>
+        </div>
+      `;
+    }).join('');
+
+    // Attach event listeners
+    attachIndicatorSelectionListeners();
+  } catch (error) {
+    console.error('Error loading indicators:', error);
+    indicatorsList.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><p>Error loading indicators: ${error.message}</p></div>`;
+  }
+}
+
+function attachIndicatorSelectionListeners() {
+  // Remove existing listeners by cloning elements
+  const selectAllBtn = document.getElementById('select-all-indicators-btn');
+  const deselectAllBtn = document.getElementById('deselect-all-indicators-btn');
+  const submitBtn = document.getElementById('add-indicators-submit-btn');
+  const cancelBtn = document.getElementById('cancel-add-indicators-btn');
+  const closeBtn = document.getElementById('close-add-indicators-modal');
+
+  // Select All
+  if (selectAllBtn) {
+    const newSelectAll = selectAllBtn.cloneNode(true);
+    selectAllBtn.parentNode.replaceChild(newSelectAll, selectAllBtn);
+    newSelectAll.addEventListener('click', () => {
+      document.querySelectorAll('.indicator-checkbox:not([disabled])').forEach(checkbox => {
+        checkbox.checked = true;
+      });
+    });
+  }
+
+  // Deselect All
+  if (deselectAllBtn) {
+    const newDeselectAll = deselectAllBtn.cloneNode(true);
+    deselectAllBtn.parentNode.replaceChild(newDeselectAll, deselectAllBtn);
+    newDeselectAll.addEventListener('click', () => {
+      document.querySelectorAll('.indicator-checkbox:not([disabled])').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+    });
+  }
+
+  // Submit
+  if (submitBtn) {
+    const newSubmit = submitBtn.cloneNode(true);
+    submitBtn.parentNode.replaceChild(newSubmit, submitBtn);
+    newSubmit.addEventListener('click', async () => {
+      await addSelectedIndicatorsToPanel();
+    });
+  }
+
+  // Cancel
+  if (cancelBtn) {
+    const newCancel = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    newCancel.addEventListener('click', closeAddIndicatorsModal);
+  }
+
+  // Close button
+  if (closeBtn) {
+    const newClose = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newClose, closeBtn);
+    newClose.addEventListener('click', closeAddIndicatorsModal);
+  }
+}
+
+async function addSelectedIndicatorsToPanel() {
+  if (!currentPanelForIndicators) return;
+
+  const checkboxes = document.querySelectorAll('.indicator-checkbox:checked:not([disabled])');
+  const selectedIndicatorIds = Array.from(checkboxes).map(cb => cb.dataset.indicatorId);
+
+  if (selectedIndicatorIds.length === 0) {
+    alert('Please select at least one indicator to add.');
+    return;
+  }
+
+  const submitBtn = document.getElementById('add-indicators-submit-btn');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Adding...';
+  }
+
+  try {
+    await AdminService.addIndicatorsToPanel(selectedIndicatorIds, currentPanelForIndicators);
+    
+    // Show success and close
+    alert(`Successfully added ${selectedIndicatorIds.length} indicator(s) to the panel!`);
+    closeAddIndicatorsModal();
+    
+    // Reload panels to show updated indicator counts
+    await loadPanels();
+  } catch (error) {
+    console.error('Error adding indicators to panel:', error);
+    alert(`Error: ${error.message}`);
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Add Selected Indicators';
+    }
+  }
+}
+
+function closeAddIndicatorsModal() {
+  const modal = document.getElementById('add-indicators-to-panel-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+  currentPanelForIndicators = null;
+  allIndicatorsForSelection = [];
+}
+
 // Make functions available globally for onclick handlers
 window.editPanel = editPanel;
 window.deletePanelConfirm = deletePanelConfirm;
 window.editIndicator = editIndicator;
 window.deleteIndicatorConfirm = deleteIndicatorConfirm;
+window.openAddIndicatorsToPanel = openAddIndicatorsToPanel;
 
