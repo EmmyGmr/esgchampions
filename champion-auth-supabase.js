@@ -155,14 +155,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Show loading state
         linkedinLoginBtn.disabled = true;
         const originalText = linkedinLoginBtn.innerHTML;
-        linkedinLoginBtn.innerHTML = '<span>Redirecting to LinkedIn...</span>';
+        linkedinLoginBtn.innerHTML = '<span>Opening LinkedIn...</span>';
         
-        // Initiate LinkedIn OAuth
+        // Initiate LinkedIn OAuth popup
         await SupabaseService.signInWithLinkedIn();
-        // User will be redirected to LinkedIn, then back to this page
+        
+        // If successful, redirect to dashboard
+        window.location.href = 'champion-dashboard.html';
       } catch (error) {
         console.error('LinkedIn login error:', error);
-        alert(error.message || 'Failed to initiate LinkedIn login. Please try again.');
+        
+        // Show user-friendly error message
+        const errorMessage = error.message || 'Failed to initiate LinkedIn login. Please try again.';
+        if (errorMessage.includes('blocked')) {
+          alert('Popup was blocked. Please allow popups for this site and try again.');
+        } else if (errorMessage.includes('cancelled')) {
+          // User cancelled, don't show error
+          console.log('LinkedIn authentication cancelled by user');
+        } else {
+          alert(errorMessage);
+        }
         
         // Reset button
         linkedinLoginBtn.disabled = false;

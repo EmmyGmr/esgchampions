@@ -128,24 +128,98 @@ const SupabaseService = {
   },
 
   /**
-   * Sign in with LinkedIn OAuth
+   * Sign in with LinkedIn OAuth (Popup version)
    */
   async signInWithLinkedIn() {
-    try {
-      const { data, error } = await supabaseClient.auth.signInWithOAuth({
-        provider: 'linkedin',
-        options: {
-          redirectTo: `${window.location.origin}/champion-login.html`,
-          scopes: 'r_liteprofile r_emailaddress'
-        }
-      });
+    return new Promise((resolve, reject) => {
+      try {
+        // Get the OAuth URL from Supabase
+        supabaseClient.auth.signInWithOAuth({
+          provider: 'linkedin',
+          options: {
+            redirectTo: `${window.location.origin}/linkedin-callback.html`,
+            scopes: 'openid profile email'
+          }
+        }).then(({ data, error }) => {
+          if (error) {
+            reject(error);
+            return;
+          }
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('LinkedIn OAuth error:', error);
-      throw error;
-    }
+          if (data?.url) {
+            // Open LinkedIn OAuth in a popup window
+            const width = 600;
+            const height = 700;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+
+            const popup = window.open(
+              data.url,
+              'LinkedIn Login',
+              `width=${width},height=${height},left=${left},top=${top},toolbar=no,menubar=no,scrollbars=yes,resizable=yes,location=no,directories=no,status=no`
+            );
+
+            if (!popup) {
+              reject(new Error('Popup blocked. Please allow popups for this site.'));
+              return;
+            }
+
+            // Listen for messages from the popup
+            const messageListener = async (event) => {
+              // Security: Verify origin
+              if (event.origin !== window.location.origin) {
+                return;
+              }
+
+              if (event.data.type === 'LINKEDIN_OAUTH_SUCCESS') {
+                // Remove listener
+                window.removeEventListener('message', messageListener);
+                
+                // Close popup
+                popup.close();
+
+                // Handle the session
+                try {
+                  const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                  
+                  if (sessionError) throw sessionError;
+                  
+                  if (session) {
+                    // Process LinkedIn callback
+                    await this.handleOAuthCallback(session);
+                    resolve(session);
+                  } else {
+                    reject(new Error('No session found after LinkedIn authentication'));
+                  }
+                } catch (error) {
+                  reject(error);
+                }
+              } else if (event.data.type === 'LINKEDIN_OAUTH_ERROR') {
+                window.removeEventListener('message', messageListener);
+                popup.close();
+                reject(new Error(event.data.error || 'LinkedIn authentication failed'));
+              }
+            };
+
+            window.addEventListener('message', messageListener);
+
+            // Check if popup is closed manually
+            const checkClosed = setInterval(() => {
+              if (popup.closed) {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageListener);
+                reject(new Error('LinkedIn authentication was cancelled'));
+              }
+            }, 1000);
+          } else {
+            reject(new Error('Failed to get OAuth URL'));
+          }
+        });
+      } catch (error) {
+        console.error('LinkedIn OAuth error:', error);
+        reject(error);
+      }
+    });
   },
 
   /**
