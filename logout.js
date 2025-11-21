@@ -33,22 +33,14 @@ function createLogoutModal() {
   // Insert modal into body
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-  // Attach event listeners
-  const modal = document.getElementById('logout-confirm-modal');
-  const confirmBtn = document.getElementById('logout-confirm-btn');
-  const cancelBtn = document.getElementById('logout-cancel-btn');
-
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      modal.classList.add('hidden');
-    });
-  }
-
   // Close modal when clicking outside
+  const modal = document.getElementById('logout-confirm-modal');
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target.id === 'logout-confirm-modal') {
         modal.classList.add('hidden');
+        // Redirect to champion dashboard when clicking outside
+        window.location.href = 'champion-dashboard.html';
       }
     });
   }
@@ -76,8 +68,8 @@ async function performLogout() {
     await window.DynamicNavigation.update();
   }
   
-  // Redirect to login page
-  window.location.href = 'champion-login.html';
+  // Redirect to index.html and refresh
+  window.location.href = 'index.html';
 }
 
 async function initLogout() {
@@ -130,6 +122,22 @@ async function initLogout() {
         modal.classList.add('hidden');
       }
       await performLogout();
+    });
+  }
+
+  // Handle cancel button click
+  const cancelBtn = document.getElementById('logout-cancel-btn');
+  if (cancelBtn) {
+    // Remove any existing listeners by cloning the button
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    
+    newCancelBtn.addEventListener('click', () => {
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      // Redirect to champion dashboard
+      window.location.href = 'champion-dashboard.html';
     });
   }
 }
