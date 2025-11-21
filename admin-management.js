@@ -155,6 +155,11 @@ function openPanelForm(panelId = null) {
   const title = document.getElementById('panel-form-title');
   const formId = document.getElementById('panel-form-id');
 
+  if (!modal || !form || !title || !formId) {
+    console.error('Panel form elements not found');
+    return;
+  }
+
   if (panelId) {
     // Edit mode - load panel data
     AdminService.getAllPanels().then(panels => {
@@ -340,6 +345,11 @@ function openIndicatorForm(indicatorId = null) {
   const form = document.getElementById('indicator-form');
   const title = document.getElementById('indicator-form-title');
   const formId = document.getElementById('indicator-form-id');
+
+  if (!modal || !form || !title || !formId) {
+    console.error('Indicator form elements not found');
+    return;
+  }
 
   // Load panels first
   loadPanelsForIndicatorForm().then(() => {

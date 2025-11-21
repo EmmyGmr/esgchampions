@@ -411,6 +411,93 @@
     </div>
   </div>
 
+  <!-- Panel Form Modal -->
+  <div id="panel-form-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="panel-form-title">Add Panel</h2>
+        <button id="close-panel-form-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="panel-form">
+        <input type="hidden" id="panel-form-id" value="">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="panel-title">Panel Title <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="panel-title" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="panel-category">Category <span style="color: #ef4444;">*</span></label>
+          <select id="panel-category" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+            <option value="">Select category</option>
+            <option value="environmental">Environmental</option>
+            <option value="social">Social</option>
+            <option value="governance">Governance</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="panel-description">Description</label>
+          <textarea id="panel-description" rows="3" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="panel-purpose">Purpose</label>
+          <textarea id="panel-purpose" rows="2" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="panel-icon">Icon (Emoji or Unicode)</label>
+          <input type="text" id="panel-icon" placeholder="🌍" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+        </div>
+        <div class="flex gap-4">
+          <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem 1.5rem;">Save Panel</button>
+          <button type="button" id="cancel-panel-form" class="btn-secondary" style="flex: 1; padding: 0.75rem 1.5rem;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Indicator Form Modal -->
+  <div id="indicator-form-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="indicator-form-title">Add Indicator</h2>
+        <button id="close-indicator-form-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="indicator-form">
+        <input type="hidden" id="indicator-form-id" value="">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="indicator-title">Indicator Title <span style="color: #ef4444;">*</span></label>
+          <input type="text" id="indicator-title" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="indicator-panel">Panel <span style="color: #ef4444;">*</span></label>
+          <select id="indicator-panel" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+            <option value="">Select panel</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="indicator-description">Description</label>
+          <textarea id="indicator-description" rows="3" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="indicator-unit">Unit</label>
+          <input type="text" id="indicator-unit" placeholder="e.g., tCO2e, kWh, %" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="indicator-frameworks">Frameworks</label>
+          <input type="text" id="indicator-frameworks" placeholder="e.g., GRI 305-1, TCFD, SASB" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 1rem; font-family: inherit;">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="indicator-formula-required" style="width: 1.25rem; height: 1.25rem; cursor: pointer;">
+            <span>Formula Required</span>
+          </label>
+        </div>
+        <div class="flex gap-4">
+          <button type="submit" class="btn-primary" style="flex: 1; padding: 0.75rem 1.5rem;">Save Indicator</button>
+          <button type="button" id="cancel-indicator-form" class="btn-secondary" style="flex: 1; padding: 0.75rem 1.5rem;">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
@@ -421,6 +508,22 @@
   <script src="mobile-menu.js"></script>
   <script src="dynamic-navigation.js"></script>
   <script src="logout.js"></script>
+  <script>
+    // Close modals when clicking outside
+    document.addEventListener('DOMContentLoaded', () => {
+      const modals = ['panel-form-modal', 'indicator-form-modal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.addEventListener('click', (e) => {
+            if (e.target.id === modalId) {
+              modal.classList.add('hidden');
+            }
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>
 
