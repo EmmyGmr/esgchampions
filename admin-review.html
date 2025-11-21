@@ -393,6 +393,24 @@
     </div>
   </div>
 
+  <!-- Success Modal -->
+  <div id="success-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div style="width: 80px; height: 80px; background-color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2 style="margin-bottom: 1rem; font-size: 1.5rem; color: #065f46;">Success!</h2>
+      <p id="success-message" style="color: #6b7280; margin-bottom: 2rem; font-size: 1rem;">
+        Action completed successfully.
+      </p>
+      <div style="color: #6b7280; font-size: 0.875rem;">
+        Page will refresh automatically...
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>

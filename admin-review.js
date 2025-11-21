@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return {
         ...review,
         votes: votesResult.data || [],
-        comments: commentsResult.data || []
+        indicatorComments: commentsResult.data || [] // Renamed to avoid conflict with review.comments
       };
     }));
 
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           </div>
 
-          ${review.comments ? `
+          ${review.comments && typeof review.comments === 'string' && review.comments.trim() ? `
             <div style="margin-top: 1rem; padding: 1rem; background-color: #f9fafb; border-radius: 0.375rem;">
               <span class="meta-label" style="margin-bottom: 0.5rem; display: block;">Review Comments</span>
               <p style="color: #374151; line-height: 1.6;">${review.comments}</p>
@@ -177,14 +177,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ` : '<div style="color: #6b7280; font-size: 0.875rem;">No votes yet</div>'}
               </div>
               <div>
-                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Comments: ${review.comments?.length || 0}</span>
-                ${review.comments && review.comments.length > 0 ? `
+                <span class="meta-label" style="margin-bottom: 0.5rem; display: block; font-weight: 600;">Comments: ${review.indicatorComments?.length || 0}</span>
+                ${review.indicatorComments && review.indicatorComments.length > 0 ? `
                   <div style="font-size: 0.875rem; max-height: 100px; overflow-y: auto;">
-                    ${review.comments.map(c => {
+                    ${review.indicatorComments.map(c => {
                       const commenterName = c.champions ? `${c.champions.first_name} ${c.champions.last_name}` : 'Anonymous';
+                      const commentText = typeof c.comment === 'string' ? c.comment : (c.comment?.text || JSON.stringify(c.comment));
                       return `<div style="margin-bottom: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #e5e7eb;">
                         <div style="font-weight: 500; margin-bottom: 0.25rem;">${commenterName}</div>
-                        <div style="color: #374151; font-size: 0.8125rem;">${c.comment.substring(0, 100)}${c.comment.length > 100 ? '...' : ''}</div>
+                        <div style="color: #374151; font-size: 0.8125rem;">${commentText.substring(0, 100)}${commentText.length > 100 ? '...' : ''}</div>
                       </div>`;
                     }).join('')}
                   </div>
@@ -278,10 +279,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         await AdminService.acceptReview(reviewId);
 
         confirmModal.classList.add('hidden');
-        alert('Review accepted successfully! It has been added to the ranking page.');
         
-        // Reload reviews
-        await loadReviews();
+        // Show success modal
+        showSuccessModal('Review accepted successfully! It has been added to the ranking page.');
+        
+        // Refresh page after delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } catch (error) {
         console.error('Accept review error:', error);
         alert('Error accepting review: ' + (error.message || 'Unknown error'));
@@ -328,10 +333,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         await AdminService.deleteReview(reviewId);
 
         confirmModal.classList.add('hidden');
-        alert('Review deleted successfully.');
         
-        // Reload reviews
-        await loadReviews();
+        // Show success modal
+        showSuccessModal('Review deleted successfully.');
+        
+        // Refresh page after delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } catch (error) {
         console.error('Delete review error:', error);
         alert('Error deleting review: ' + (error.message || 'Unknown error'));
@@ -372,6 +381,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('confirm-modal').classList.add('hidden');
     }
   });
+
+  // Show success modal function
+  function showSuccessModal(message) {
+    const successModal = document.getElementById('success-modal');
+    const successMessage = document.getElementById('success-message');
+    
+    if (successMessage) {
+      successMessage.textContent = message;
+    }
+    
+    if (successModal) {
+      successModal.classList.remove('hidden');
+    }
+  }
 
   // Initial load
   await loadReviews();
