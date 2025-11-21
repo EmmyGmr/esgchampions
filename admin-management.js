@@ -588,12 +588,16 @@ async function addSelectedIndicatorsToPanel() {
   try {
     await AdminService.addIndicatorsToPanel(selectedIndicatorIds, currentPanelForIndicators);
     
-    // Show success and close
-    alert(`Successfully added ${selectedIndicatorIds.length} indicator(s) to the panel!`);
+    // Close the add indicators modal
     closeAddIndicatorsModal();
     
-    // Reload panels to show updated indicator counts
-    await loadPanels();
+    // Show success modal
+    showAddIndicatorsSuccessModal(`${selectedIndicatorIds.length} indicator(s) added successfully to the panel!`);
+    
+    // Refresh page after delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   } catch (error) {
     console.error('Error adding indicators to panel:', error);
     alert(`Error: ${error.message}`);
@@ -611,6 +615,19 @@ function closeAddIndicatorsModal() {
   }
   currentPanelForIndicators = null;
   allIndicatorsForSelection = [];
+}
+
+function showAddIndicatorsSuccessModal(message) {
+  const successModal = document.getElementById('add-indicators-success-modal');
+  const successMessage = document.getElementById('add-indicators-success-message');
+  
+  if (successMessage) {
+    successMessage.textContent = message;
+  }
+  
+  if (successModal) {
+    successModal.classList.remove('hidden');
+  }
 }
 
 // Make functions available globally for onclick handlers
